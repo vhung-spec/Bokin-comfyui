@@ -51,7 +51,8 @@ Mở app bằng shortcut, hoặc chạy `~/BokinUpscaler/bokin-upscaler.sh` (mac
 
 - Khi mở app, một cửa sổ console sẽ chạy ComfyUI ở chế độ nền. Giữ cửa sổ này mở trong lúc dùng app; đóng nó là tắt app.
 - Ảnh kết quả được lưu tự động vào thư mục **Pictures/Bokin Upscaler**.
-- Muốn dùng checkpoint khác: chép file `.safetensors` vào `BokinUpscaler/ComfyUI/models/checkpoints` rồi mở lại app.
+- Muốn dùng checkpoint khác: chép file `.safetensors` vào `ComfyUI/models/checkpoints` trong thư mục cài
+  (Windows: `%LOCALAPPDATA%\BokinUpscaler`, Linux/macOS: `~/BokinUpscaler`) rồi mở lại app.
 - Nút **Mở ComfyUI** trên app mở giao diện ComfyUI đầy đủ, kèm các workflow mẫu bên dưới.
 
 ## Cách 2 – Cài vào ComfyUI có sẵn

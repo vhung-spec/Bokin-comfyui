@@ -1,0 +1,14 @@
+[project]
+name = "bokin-comfyui"
+description = "Bokin: Shakker-style image upscaling for ComfyUI (model upscale + tiled diffusion redraw + tile ControlNet + colour fix)."
+version = "0.1.0"
+requires-python = ">=3.10"
+dependencies = []
+
+[project.urls]
+Repository = "https://github.com/vhung-spec/Bokin-comfyui"
+
+[tool.comfy]
+PublisherId = ""
+DisplayName = "Bokin"
+Icon = ""

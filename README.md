@@ -1,0 +1,142 @@
+# Bokin ComfyUI – Upscale ảnh kiểu Shakker
+
+Bộ node ComfyUI riêng để **phóng to ảnh và thêm chi tiết** giống tính năng Upscale / Hi-Res của Shakker.
+Bộ này dùng lại các model có sẵn trên thị trường: 4x-UltraSharp, RealESRGAN, SD1.5, SDXL, Flux và ControlNet Tile.
+
+## Cách hoạt động
+
+```
+Ảnh gốc ──► ① Phóng to bằng model ──► ② Vẽ lại chi tiết từng ô ──► ③ Sửa màu ──► Ảnh kết quả
+             (4x-UltraSharp,           (SD1.5 / SDXL / Flux,          (wavelet:
+              RealESRGAN...)            img2img denoise thấp,          giữ màu gốc,
+                                        + ControlNet Tile tùy chọn)    giữ chi tiết mới)
+```
+
+1. **Phóng to bằng model** ESRGAN để có đúng kích thước mong muốn (vd. 2x). Ảnh lúc này to nhưng vẫn "bệt".
+2. **Vẽ lại chi tiết**: ảnh được chia thành các ô (tile) 1024px. Mỗi ô được chạy img2img ở mức denoise thấp nên model diffusion thêm được kết cấu thật (da, tóc, vải, lá...). Các ô chồng lên nhau và được trộn mềm ở mép, nên không lộ đường nối. Mọi ô dùng chung một bản đồ nhiễu nên vùng chồng lấn khớp nhau.
+3. **Sửa màu**: lấy màu và độ sáng tổng thể từ ảnh phóng to ở bước 1, giữ phần chi tiết mới. Ảnh không bị ám màu hay lệch màu giữa các ô.
+
+## Cài đặt
+
+```bash
+cd ComfyUI/custom_nodes
+git clone https://github.com/vhung-spec/Bokin-comfyui.git
+```
+
+Khởi động lại ComfyUI. Bộ node không cần cài thêm thư viện Python nào ngoài những gì ComfyUI đã có.
+Nên dùng bản ComfyUI mới (2025 trở lên).
+
+### Tải model
+
+Dùng script có sẵn (Linux / macOS / WSL / Git Bash):
+
+```bash
+bash custom_nodes/Bokin-comfyui/scripts/download_models.sh /đường/dẫn/ComfyUI sdxl
+#   preset: fast | sd15 | sdxl | flux | all   (có thể ghi nhiều preset)
+```
+
+Hoặc tải thủ công và đặt vào đúng thư mục:
+
+| Thư mục `ComfyUI/models/...` | File | Nguồn |
+|---|---|---|
+| `upscale_models` | `4x-UltraSharp.pth` (ảnh thật, đa dụng) | [lokCX/4x-Ultrasharp](https://huggingface.co/lokCX/4x-Ultrasharp) |
+| `upscale_models` | `RealESRGAN_x4plus.pth` | [Real-ESRGAN releases](https://github.com/xinntao/Real-ESRGAN/releases) |
+| `upscale_models` | `RealESRGAN_x4plus_anime_6B.pth` (anime) | [Real-ESRGAN releases](https://github.com/xinntao/Real-ESRGAN/releases) |
+| `controlnet` | `xinsir-controlnet-tile-sdxl-1.0.safetensors` | [xinsir/controlnet-tile-sdxl-1.0](https://huggingface.co/xinsir/controlnet-tile-sdxl-1.0) (đổi tên từ `diffusion_pytorch_model.safetensors`) |
+| `controlnet` | `control_v11f1e_sd15_tile_fp16.safetensors` | [comfyanonymous/ControlNet-v1-1_fp16_safetensors](https://huggingface.co/comfyanonymous/ControlNet-v1-1_fp16_safetensors) |
+| `checkpoints` | `sd_xl_base_1.0.safetensors` | [stabilityai/stable-diffusion-xl-base-1.0](https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0) |
+| `checkpoints` | `v1-5-pruned-emaonly-fp16.safetensors` | [Comfy-Org/stable-diffusion-v1-5-archive](https://huggingface.co/Comfy-Org/stable-diffusion-v1-5-archive) |
+| `checkpoints` | `flux1-dev-fp8.safetensors` (~17 GB) | [Comfy-Org/flux1-dev](https://huggingface.co/Comfy-Org/flux1-dev) |
+
+Checkpoint gốc chỉ là mặc định. Kết quả sẽ đẹp hơn nhiều nếu bạn dùng checkpoint đã fine-tune tải từ Civitai hoặc Shakker:
+
+- Ảnh thật: Juggernaut XL, RealVisXL (SDXL); Realistic Vision (SD1.5)
+- Anime: Illustrious, NoobAI (SDXL)
+
+Chỉ cần chọn checkpoint đó trong node **Load Checkpoint**.
+
+## Workflow mẫu
+
+Kéo thả file trong thư mục [`example_workflows/`](example_workflows) vào ComfyUI. Bạn cũng có thể mở chúng từ **Templates → Custom nodes → Bokin-comfyui**.
+
+| Workflow | Dùng khi | VRAM gợi ý |
+|---|---|---|
+| `Bokin_Upscale_Fast.json` | Chỉ phóng to nhanh bằng model, không vẽ lại | 2 GB+ |
+| `Bokin_Upscale_SD15.json` | Máy yếu, ảnh SD1.5 | 4–6 GB |
+| `Bokin_Upscale_SDXL.json` | **Khuyên dùng** – SDXL + ControlNet Tile, giống Shakker nhất | 8 GB+ |
+| `Bokin_Upscale_Flux.json` | Chi tiết chân thực nhất, chậm nhất | 12 GB+ (fp8) |
+
+Cách dùng: chọn ảnh ở **Load Image**, chỉnh `upscale_by` và `mode` rồi bấm **Run**.
+Ô **Save Image** là kết quả. Ô **Before** là ảnh chỉ phóng to bằng model, để so sánh trước/sau.
+
+## Các node
+
+### Bokin Upscale (Shakker-style)
+
+Node chính, làm cả 3 bước trên.
+
+| Tham số | Ý nghĩa |
+|---|---|
+| `upscale_by` | Hệ số phóng to: 1.5 / 2 / 3 / 4… Để **1.0** nếu chỉ muốn làm nét và thêm chi tiết mà không đổi kích thước. |
+| `mode` | Mức "sáng tạo" (denoise), xem bảng dưới. |
+| `seed`, `steps`, `cfg`, `sampler_name`, `scheduler` | Giống KSampler. Chỉnh theo checkpoint đang dùng. |
+| `denoise` | Chỉ dùng khi `mode = Custom`. 0 = không vẽ lại. |
+| `tile_size` | Kích thước ô: **1024** cho SDXL/Flux, **512–768** cho SD1.5. Giảm nếu thiếu VRAM. |
+| `tile_overlap` | Phần chồng giữa các ô (mặc định 128). Tăng lên nếu thấy đường nối. |
+| `passes` | Chia việc phóng to thành nhiều lần, vd. 4x với `passes = 2` là hai lần x2, mỗi lần đều vẽ lại. Đẹp hơn với hệ số lớn nhưng chậm hơn. |
+| `color_fix` | `wavelet` (khuyên dùng), `adain`, hoặc `none`. |
+| `upscale_model` *(tùy chọn)* | Model ESRGAN. Bỏ trống thì phóng to bằng bicubic. |
+| `control_net` *(tùy chọn)* | ControlNet Tile: giữ bố cục nên dùng được denoise cao hơn. |
+| `controlnet_strength`, `controlnet_end` | Độ mạnh và thời điểm kết thúc ControlNet (gợi ý 0.5–0.8 và 0.8–1.0). |
+
+Bảng `mode`, tương ứng mức Creativity của Shakker:
+
+| Mode | Denoise khi không có ControlNet | Denoise khi có ControlNet Tile | Khi nào dùng |
+|---|---|---|---|
+| Faithful | 0.20 | 0.35 | Ảnh chân dung, sản phẩm, logo: giữ sát bản gốc |
+| **Balanced** | 0.30 | 0.50 | Mặc định, hợp với đa số ảnh |
+| Creative | 0.45 | 0.70 | Ảnh mờ hoặc nhỏ cần "tái tạo" nhiều chi tiết |
+| Custom | `denoise` | `denoise` | Tự chỉnh |
+
+Kết quả trả về:
+
+- `image`: ảnh kết quả
+- `base_upscale`: ảnh chỉ phóng to bằng model
+
+### Bokin Upscale Fast (model only)
+
+Phóng to bằng model ESRGAN tới **đúng** hệ số `upscale_by`, ví dụ dùng model 4x nhưng ra ảnh 2x. Node này không cần checkpoint.
+
+### Bokin Color Match
+
+Đưa màu của một ảnh về giống ảnh tham chiếu mà vẫn giữ chi tiết (`wavelet` / `adain`, có `strength`).
+Hữu ích khi ghép với các workflow khác.
+
+## Thiết lập gợi ý
+
+| Checkpoint | steps | cfg | sampler / scheduler |
+|---|---|---|---|
+| SDXL thường | 20–30 | 5–7 | dpmpp_2m / karras |
+| SDXL Lightning / Hyper / Turbo | 6–8 | 1.5–2 | dpmpp_sde hoặc euler / karras hoặc sgm_uniform |
+| SD1.5 | 20–30 | 6–8 | dpmpp_2m / karras |
+| Flux.1 dev | 20 | **1.0** (dùng FluxGuidance 2.5–3.5) | euler / simple |
+
+Mẹo:
+
+- **Prompt**: mô tả ngắn nội dung ảnh, vd. "portrait of a woman, freckles, soft light", rồi thêm từ khóa chất lượng. Kết quả sẽ tốt hơn prompt chung chung.
+- **Xuất hiện mặt hoặc vật thể lạ trong ảnh**: denoise quá cao. Hạ `mode` xuống, hoặc nối thêm ControlNet Tile.
+- **Ảnh chưa đủ nét**: tăng `mode`, hoặc dùng `passes = 2` khi phóng ≥ 3x.
+- **Lỗi hết VRAM**: giảm `tile_size` (1024 → 768), dùng checkpoint fp16/fp8.
+- **Lộ đường nối giữa các ô**: tăng `tile_overlap` (192–256) và giữ `color_fix = wavelet`.
+
+## Phát triển
+
+Logic chia ô, trộn mép và sửa màu nằm trong `bokin/tiling.py`, `bokin/color.py` và `bokin/presets.py`.
+Các file này chỉ phụ thuộc PyTorch, nên test được mà không cần ComfyUI:
+
+```bash
+pip install torch pytest
+pytest tests
+```
+
+Node ComfyUI nằm trong `bokin/nodes_upscale.py`.

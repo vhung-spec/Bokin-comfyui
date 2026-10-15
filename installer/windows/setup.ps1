@@ -26,9 +26,11 @@ try {
   $Tools = Join-Path $InstallDir "tools"
   New-Item -ItemType Directory -Force -Path $Tools | Out-Null
 
-  $env:UV_PYTHON_INSTALL_DIR = Join-Path $Tools "python"
   $env:UV_CACHE_DIR = Join-Path $Tools "uv-cache"
-  $env:UV_PYTHON_PREFERENCE = "only-managed"  # never depend on a system Python
+  # uv-managed Python links its minor version with a junction, which some Windows
+  # setups (e.g. OneDrive Files On-Demand) refuse with "untrusted mount point"
+  # (os error 448). Use a plain standalone Python folder instead, never uv's.
+  $env:UV_PYTHON_DOWNLOADS = "never"
   $env:PYTHONUTF8 = "1"
 
   $Uv = Join-Path $Tools "uv.exe"
@@ -45,8 +47,33 @@ try {
   $Venv = Join-Path $InstallDir ".venv"
   $Py = Join-Path $Venv "Scripts\python.exe"
   if (-not (Test-Path $Py)) {
-    Write-Host "Creating the Python 3.12 environment..."
-    & $Uv venv --python 3.12 $Venv
+    # python-build-standalone, the same build uv would download, unpacked to a normal folder.
+    $PyVersion = "3.12.14"
+    $PyUrl = "https://github.com/astral-sh/python-build-standalone/releases/download/20260929/cpython-3.12.14%2B20260929-x86_64-pc-windows-msvc-install_only_stripped.tar.gz"
+    $PySha256 = "f38e68f4d612ade6dd50c894fc80b14c0be0c3b5201145d6fff5f20b9323204d"
+    $PyHome = Join-Path $Tools "python-$PyVersion"
+    $BasePy = Join-Path $PyHome "python.exe"
+    if (-not (Test-Path $BasePy)) {
+      Write-Host "Downloading Python $PyVersion (22 MB)..."
+      $Archive = Join-Path $Tools "python.tar.gz"
+      Invoke-WebRequest -UseBasicParsing -Uri $PyUrl -OutFile $Archive
+      $Hash = (Get-FileHash -Algorithm SHA256 -Path $Archive).Hash.ToLower()
+      if ($Hash -ne $PySha256) { throw "Python download is corrupted (SHA256 $Hash). Please run Setup again." }
+      $Unpack = Join-Path $Tools "python-unpack"
+      if (Test-Path $Unpack) { cmd /c rmdir /s /q "$Unpack" }
+      New-Item -ItemType Directory -Force -Path $Unpack | Out-Null
+      & (Join-Path $env:SystemRoot "System32\tar.exe") -xzf $Archive -C $Unpack
+      if ($LASTEXITCODE -ne 0) { throw "Could not unpack Python (tar exit code $LASTEXITCODE)" }
+      Move-Item -Path (Join-Path $Unpack "python") -Destination $PyHome
+      Remove-Item -Path $Archive -Force
+      cmd /c rmdir /s /q "$Unpack"
+    }
+    # Left over by older installers that let uv manage Python; rmdir does not follow junctions.
+    $OldManaged = Join-Path $Tools "python"
+    if (Test-Path $OldManaged) { cmd /c rmdir /s /q "$OldManaged" }
+
+    Write-Host "Creating the Python environment..."
+    & $Uv venv --python $BasePy $Venv
     if ($LASTEXITCODE -ne 0) { throw "uv venv failed (exit code $LASTEXITCODE)" }
   }
 

@@ -58,6 +58,10 @@ jobs:
           if (Test-Path C:\BokinTest\install-log.txt) { Get-Content C:\BokinTest\install-log.txt -Encoding utf8 }
           if ($p.ExitCode -ne 0) { Get-Content C:\bokin-setup.log; exit 1 }
           if (-not (Test-Path "C:\BokinTest\Bokin Upscaler.bat")) { throw "launcher missing" }
+          if (-not (Test-Path "C:\BokinTest\.venv\Scripts\python.exe")) { throw "Python environment missing" }
+          # Junctions/symlinks break on some Windows setups (os error 448, e.g. with OneDrive Files On-Demand).
+          $links = Get-ChildItem C:\BokinTest -Recurse -Force -Attributes ReparsePoint -ErrorAction SilentlyContinue
+          if ($links) { $links | ForEach-Object { $_.FullName }; throw "install contains junctions or symlinks" }
           if (-not (Test-Path "$([Environment]::GetFolderPath('Desktop'))\Bokin Upscaler.lnk")) { throw "desktop shortcut missing" }
       - name: Smoke test
         shell: pwsh

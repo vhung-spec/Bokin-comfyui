@@ -52,8 +52,7 @@ Name: "{userprograms}\Bokin Upscaler"; Filename: "{app}\Bokin Upscaler.bat"; Wor
 Name: "{userdesktop}\Bokin Upscaler"; Filename: "{app}\Bokin Upscaler.bat"; WorkingDir: "{app}"; IconFilename: "{app}\bokin.ico"; Tasks: desktopicon
 
 [Run]
-Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\src\installer\windows\setup.ps1"" -InstallDir ""{app}"" -Models {code:ModelPreset} -NoShortcut -Yes {code:PauseFlag}"; StatusMsg: "Đang tải ComfyUI, PyTorch và model (10-40 phút, xem cửa sổ PowerShell)..."; Flags: waituntilterminated
-Filename: "{app}\Bokin Upscaler.bat"; Description: "Mở Bokin Upscaler"; Flags: postinstall nowait skipifsilent shellexec
+Filename: "{app}\Bokin Upscaler.bat"; Description: "Mở Bokin Upscaler"; Flags: postinstall nowait skipifsilent shellexec; Check: SetupSucceeded
 
 [UninstallDelete]
 Type: filesandordirs; Name: "{app}"
@@ -77,4 +76,35 @@ begin
     Result := ''
   else
     Result := '-PauseOnError';
+end;
+
+var
+  SetupFailed: Boolean;
+
+{ Download ComfyUI, PyTorch and the models with setup.ps1 and check that it worked. }
+procedure CurStepChanged(CurStep: TSetupStep);
+var
+  ResultCode: Integer;
+  Params: String;
+begin
+  if CurStep = ssPostInstall then
+  begin
+    Params := '-NoProfile -ExecutionPolicy Bypass -File "' + ExpandConstant('{app}\src\installer\windows\setup.ps1') +
+      '" -InstallDir "' + ExpandConstant('{app}') + '" -Models ' + ModelPreset('') + ' -NoShortcut -Yes ' + PauseFlag('');
+    WizardForm.StatusLabel.Caption := 'Đang tải ComfyUI, PyTorch và model (10-40 phút, xem cửa sổ PowerShell)...';
+    WizardForm.FilenameLabel.Caption := '';
+    if not Exec(ExpandConstant('{sys}\WindowsPowerShell\v1.0\powershell.exe'), Params, ExpandConstant('{app}'),
+                SW_SHOW, ewWaitUntilTerminated, ResultCode) or (ResultCode <> 0) then
+    begin
+      SetupFailed := True;
+      SuppressibleMsgBox('Cài đặt chưa hoàn tất: bước tải ComfyUI / PyTorch / model bị lỗi (mã ' + IntToStr(ResultCode) + ').' + #13#10#13#10 +
+        'Xem thông báo lỗi trong cửa sổ PowerShell và file install-log.txt trong thư mục cài, rồi chạy lại Setup ' +
+        '(những phần đã tải xong sẽ được giữ lại).', mbError, MB_OK, IDOK);
+    end;
+  end;
+end;
+
+function SetupSucceeded: Boolean;
+begin
+  Result := not SetupFailed;
 end;

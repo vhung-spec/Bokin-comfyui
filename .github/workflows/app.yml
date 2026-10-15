@@ -49,16 +49,24 @@ jobs:
           name: BokinUpscaler-Setup
           path: dist/BokinUpscaler-Setup.exe
           if-no-files-found: error
-      - name: Install-Bokin.bat path (setup.ps1 under Windows PowerShell 5.1)
+      - name: One-line installer (irm | iex) under Windows PowerShell 5.1
         shell: pwsh
+        env:
+          BOKIN_DIR: C:\BokinWeb
+          BOKIN_REF: ${{ github.sha }}
+          BOKIN_MODELS: none
+          BOKIN_TORCH: cpu
+          BOKIN_YES: "1"
         run: |
-          powershell.exe -NoProfile -ExecutionPolicy Bypass -File installer\windows\setup.ps1 -InstallDir C:\BokinDirect -Models none -Torch cpu -NoShortcut -Yes
-          $code = $LASTEXITCODE
-          if (Test-Path C:\BokinDirect\setup-log.txt) { Get-Content C:\BokinDirect\setup-log.txt }
-          if ($code -ne 0) { exit $code }
-          if (-not (Test-Path C:\BokinDirect\.venv\Scripts\python.exe)) { throw "Python environment missing" }
-          $links = Get-ChildItem C:\BokinDirect -Recurse -Force -Attributes ReparsePoint -ErrorAction SilentlyContinue
+          powershell.exe -NoProfile -Command "Get-Content -Raw installer\windows\web-install.ps1 | Invoke-Expression"
+          if (Test-Path C:\BokinWeb\setup-log.txt) { Get-Content C:\BokinWeb\setup-log.txt }
+          if (-not (Test-Path C:\BokinWeb\.venv\Scripts\python.exe)) { throw "Python environment missing" }
+          if (-not (Test-Path "C:\BokinWeb\Bokin Upscaler.bat")) { throw "launcher missing" }
+          $links = Get-ChildItem C:\BokinWeb -Recurse -Force -Attributes ReparsePoint -ErrorAction SilentlyContinue
           if ($links) { $links | ForEach-Object { $_.FullName }; throw "install contains junctions or symlinks" }
+          $lnk = (New-Object -ComObject WScript.Shell).CreateShortcut("$([Environment]::GetFolderPath('Desktop'))\Bokin Upscaler.lnk")
+          "Shortcut target: $($lnk.TargetPath)"
+          if ($lnk.TargetPath -ne 'C:\BokinWeb\Bokin Upscaler.bat') { throw "wrong desktop shortcut" }
       - name: Install silently (CPU, fast models)
         shell: pwsh
         run: |

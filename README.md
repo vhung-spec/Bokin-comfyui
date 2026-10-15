@@ -27,16 +27,32 @@ Bộ cài tự lo mọi thứ (Python, PyTorch, ComfyUI, model) trong một thư
 
 **Yêu cầu:** Internet, 5–25 GB ổ đĩa trống (tùy bộ model). Nên có GPU NVIDIA; không có GPU thì chỉ nên dùng chế độ Nhanh.
 
-### Windows
+### Windows – cài bằng một dòng lệnh (khuyên dùng)
 
-1. Tải `BokinUpscaler-Setup.exe`: vào tab **Actions → Bokin app** của repo, mở lần chạy mới nhất, mục *Artifacts*.
-2. Chạy file. Nếu Windows SmartScreen cảnh báo (file chưa ký số), bấm **More info → Run anyway**.
-3. Chọn bộ model (SDXL khuyên dùng với GPU 8 GB+) rồi bấm Install. Một cửa sổ PowerShell sẽ hiện tiến độ tải (10–40 phút tùy mạng).
+1. Bấm **Start**, gõ `PowerShell`, mở **Windows PowerShell** (không cần quyền Admin).
+2. Dán lệnh sau rồi bấm Enter:
+
+   ```powershell
+   irm https://raw.githubusercontent.com/vhung-spec/Bokin-comfyui/claude/fervent-heisenberg-17b0js/installer/windows/web-install.ps1 | iex
+   ```
+
+3. Chọn bộ model khi được hỏi (SDXL khuyên dùng với GPU 8 GB+). Việc tải mất 10–40 phút tùy mạng.
 4. Mở app bằng shortcut **Bokin Upscaler** trên Desktop.
 
-Không muốn dùng file .exe: tải mã nguồn (Code → Download ZIP), giải nén rồi chạy `installer\windows\Install-Bokin.bat`.
+Cách này không tải file qua trình duyệt nên Chrome không chặn. Chạy lại lệnh để cập nhật.
+Gỡ cài đặt: xóa thư mục `%LOCALAPPDATA%\BokinUpscaler` và shortcut trên Desktop.
+
+### Windows – file cài đặt .exe
+
+1. Tải `BokinUpscaler-Setup.exe`: vào tab **Actions → Bokin app** của repo, mở lần chạy mới nhất, mục *Artifacts*.
+   Chrome có thể chặn tải với lý do "tệp nguy hiểm", vì file chưa ký số và còn mới. Khi đó hãy dùng cách một dòng lệnh ở trên.
+2. Chạy file. Nếu Windows SmartScreen cảnh báo, bấm **More info → Run anyway**.
+3. Chọn bộ model rồi bấm Install. Một cửa sổ PowerShell sẽ hiện tiến độ tải.
+4. Mở app bằng shortcut **Bokin Upscaler** trên Desktop.
 
 Gỡ cài đặt: **Settings → Apps → Bokin Upscaler → Uninstall**.
+
+Cách khác: tải mã nguồn (Code → Download ZIP), giải nén rồi chạy `installer\windows\Install-Bokin.bat`.
 
 ### Linux / macOS
 
@@ -187,6 +203,7 @@ Bộ cài nằm trong `installer/`:
 |---|---|
 | `setup.py` | Phần cài đặt chung cho mọi hệ điều hành: ComfyUI, PyTorch, node pack, model, shortcut |
 | `windows/setup.ps1`, `windows/Install-Bokin.bat` | Khởi động bộ cài trên Windows (tải uv + Python) |
+| `windows/web-install.ps1` | Cài bằng một dòng lệnh `irm … \| iex`: tải mã nguồn rồi chạy `setup.ps1` |
 | `install.sh` | Khởi động bộ cài trên Linux / macOS |
 | `windows/bokin.iss` | Script Inno Setup để build `BokinUpscaler-Setup.exe` |
 | `bokin_launcher.py` | Chạy ComfyUI chạy nền và mở cửa sổ app |

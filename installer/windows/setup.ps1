@@ -21,6 +21,8 @@ $ErrorActionPreference = "Stop"
 $ProgressPreference = "SilentlyContinue"  # Invoke-WebRequest is very slow with its progress bar
 
 try {
+  New-Item -ItemType Directory -Force -Path $InstallDir | Out-Null
+  Start-Transcript -Path (Join-Path $InstallDir "setup-log.txt") -Append | Out-Null
   [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
   $Src = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
   $Tools = Join-Path $InstallDir "tools"
@@ -87,6 +89,7 @@ try {
 catch {
   Write-Host ""
   Write-Host "ERROR: $_" -ForegroundColor Red
+  Write-Host $_.ScriptStackTrace
   if ($PauseOnError) { Read-Host "Press Enter to close" | Out-Null }
   exit 1
 }

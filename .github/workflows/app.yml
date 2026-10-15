@@ -49,12 +49,23 @@ jobs:
           name: BokinUpscaler-Setup
           path: dist/BokinUpscaler-Setup.exe
           if-no-files-found: error
+      - name: Install-Bokin.bat path (setup.ps1 under Windows PowerShell 5.1)
+        shell: pwsh
+        run: |
+          powershell.exe -NoProfile -ExecutionPolicy Bypass -File installer\windows\setup.ps1 -InstallDir C:\BokinDirect -Models none -Torch cpu -NoShortcut -Yes
+          $code = $LASTEXITCODE
+          if (Test-Path C:\BokinDirect\setup-log.txt) { Get-Content C:\BokinDirect\setup-log.txt }
+          if ($code -ne 0) { exit $code }
+          if (-not (Test-Path C:\BokinDirect\.venv\Scripts\python.exe)) { throw "Python environment missing" }
+          $links = Get-ChildItem C:\BokinDirect -Recurse -Force -Attributes ReparsePoint -ErrorAction SilentlyContinue
+          if ($links) { $links | ForEach-Object { $_.FullName }; throw "install contains junctions or symlinks" }
       - name: Install silently (CPU, fast models)
         shell: pwsh
         run: |
           $p = Start-Process -FilePath dist\BokinUpscaler-Setup.exe -Wait -PassThru -ArgumentList `
             '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/TASKS="fast,desktopicon"', '/DIR="C:\BokinTest"', '/LOG="C:\bokin-setup.log"'
           "Setup exit code: $($p.ExitCode)"
+          if (Test-Path C:\BokinTest\setup-log.txt) { Get-Content C:\BokinTest\setup-log.txt }
           if (Test-Path C:\BokinTest\install-log.txt) { Get-Content C:\BokinTest\install-log.txt -Encoding utf8 }
           if ($p.ExitCode -ne 0) { Get-Content C:\bokin-setup.log; exit 1 }
           if (-not (Test-Path "C:\BokinTest\Bokin Upscaler.bat")) { throw "launcher missing" }

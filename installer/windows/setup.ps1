@@ -18,7 +18,16 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$ProgressPreference = "SilentlyContinue"  # Invoke-WebRequest is very slow with its progress bar
+
+# Only plain .NET calls and built-in tools below, no module cmdlets such as
+# Invoke-WebRequest, Expand-Archive or Get-FileHash: those fail to auto-load
+# when PSModulePath points at PowerShell 7 modules (e.g. Setup started from pwsh).
+function Get-File([string]$Url, [string]$Path) {
+  $Client = New-Object System.Net.WebClient
+  if ($Client.Proxy) { $Client.Proxy.Credentials = [System.Net.CredentialCache]::DefaultNetworkCredentials }
+  try { $Client.DownloadFile($Url, $Path) } finally { $Client.Dispose() }
+}
+$Tar = Join-Path $env:SystemRoot "System32\tar.exe"
 
 try {
   New-Item -ItemType Directory -Force -Path $InstallDir | Out-Null
@@ -39,11 +48,15 @@ try {
   if (-not (Test-Path $Uv)) {
     Write-Host "Downloading uv..."
     $Zip = Join-Path $Tools "uv.zip"
-    Invoke-WebRequest -UseBasicParsing -Uri "https://github.com/astral-sh/uv/releases/latest/download/uv-x86_64-pc-windows-msvc.zip" -OutFile $Zip
+    Get-File "https://github.com/astral-sh/uv/releases/latest/download/uv-x86_64-pc-windows-msvc.zip" $Zip
     $Unpacked = Join-Path $Tools "uv-unpacked"
-    Expand-Archive -Path $Zip -DestinationPath $Unpacked -Force
+    if (Test-Path $Unpacked) { cmd /c rmdir /s /q "$Unpacked" }
+    New-Item -ItemType Directory -Force -Path $Unpacked | Out-Null
+    & $Tar -xf $Zip -C $Unpacked
+    if ($LASTEXITCODE -ne 0) { throw "Could not unpack uv (tar exit code $LASTEXITCODE)" }
     Get-ChildItem -Path $Unpacked -Recurse -Filter "uv*.exe" | Move-Item -Destination $Tools -Force
-    Remove-Item $Zip, $Unpacked -Recurse -Force
+    Remove-Item -Path $Zip -Force
+    cmd /c rmdir /s /q "$Unpacked"
   }
 
   $Venv = Join-Path $InstallDir ".venv"
@@ -58,13 +71,16 @@ try {
     if (-not (Test-Path $BasePy)) {
       Write-Host "Downloading Python $PyVersion (22 MB)..."
       $Archive = Join-Path $Tools "python.tar.gz"
-      Invoke-WebRequest -UseBasicParsing -Uri $PyUrl -OutFile $Archive
-      $Hash = (Get-FileHash -Algorithm SHA256 -Path $Archive).Hash.ToLower()
+      Get-File $PyUrl $Archive
+      $Sha = [System.Security.Cryptography.SHA256]::Create()
+      $Stream = [System.IO.File]::OpenRead($Archive)
+      try { $Hash = -join ($Sha.ComputeHash($Stream) | ForEach-Object { $_.ToString("x2") }) }
+      finally { $Stream.Dispose(); $Sha.Dispose() }
       if ($Hash -ne $PySha256) { throw "Python download is corrupted (SHA256 $Hash). Please run Setup again." }
       $Unpack = Join-Path $Tools "python-unpack"
       if (Test-Path $Unpack) { cmd /c rmdir /s /q "$Unpack" }
       New-Item -ItemType Directory -Force -Path $Unpack | Out-Null
-      & (Join-Path $env:SystemRoot "System32\tar.exe") -xzf $Archive -C $Unpack
+      & $Tar -xzf $Archive -C $Unpack
       if ($LASTEXITCODE -ne 0) { throw "Could not unpack Python (tar exit code $LASTEXITCODE)" }
       Move-Item -Path (Join-Path $Unpack "python") -Destination $PyHome
       Remove-Item -Path $Archive -Force

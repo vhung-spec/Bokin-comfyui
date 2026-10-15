@@ -140,6 +140,9 @@ def download(comfy_dir: Path, presets: list[str]) -> list[str]:
 
 
 def main(argv: list[str]) -> int:
+    for stream in (sys.stdout, sys.stderr):  # Vietnamese text must not crash on cp1252 pipes
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="replace")
     if not argv or argv[0] in ("-h", "--help"):
         print(__doc__)
         return 1

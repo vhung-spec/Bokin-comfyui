@@ -109,6 +109,9 @@ def wait_ready(proc: subprocess.Popen, port: int, timeout: float = 900) -> bool:
 
 
 def main() -> int:
+    for stream in (sys.stdout, sys.stderr):  # Vietnamese text must not crash on cp1252 pipes
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="replace")
     parser = argparse.ArgumentParser(description="Chạy Bokin Upscaler")
     parser.add_argument("--port", type=int, default=8188)
     parser.add_argument("--no-browser", action="store_true", help="không tự mở cửa sổ app")

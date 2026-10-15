@@ -38,6 +38,15 @@ SRC = Path(__file__).resolve().parent.parent  # the Bokin repository / node pack
 INSTALLER = SRC / "installer"
 APP_NAME = "Bokin Upscaler"
 
+def utf8_output() -> None:
+    """Never crash on Vietnamese text when output goes to a non-UTF-8 pipe (e.g. cp1252)."""
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="replace")
+
+
+utf8_output()
+
 MODEL_CHOICES = [
     ("sdxl", "SDXL + ControlNet Tile", "khuyên dùng, GPU NVIDIA 8 GB+"),
     ("sd15", "SD 1.5 + ControlNet Tile", "GPU 4 GB+"),

@@ -16,7 +16,45 @@ Bộ này dùng lại các model có sẵn trên thị trường: 4x-UltraSharp,
 2. **Vẽ lại chi tiết**: ảnh được chia thành các ô (tile) 1024px. Mỗi ô được chạy img2img ở mức denoise thấp nên model diffusion thêm được kết cấu thật (da, tóc, vải, lá...). Các ô chồng lên nhau và được trộn mềm ở mép, nên không lộ đường nối. Mọi ô dùng chung một bản đồ nhiễu nên vùng chồng lấn khớp nhau.
 3. **Sửa màu**: lấy màu và độ sáng tổng thể từ ảnh phóng to ở bước 1, giữ phần chi tiết mới. Ảnh không bị ám màu hay lệch màu giữa các ô.
 
-## Cài đặt
+## Cách 1 – App Bokin Upscaler (dễ nhất, không cần biết ComfyUI)
+
+App gồm ComfyUI, bộ node Bokin và một giao diện riêng giống Shakker:
+- kéo thả ảnh, chọn 1.5x / 2x / 3x / 4x và chế độ (Nhanh / Giữ nguyên / Cân bằng / Sáng tạo)
+- thanh tiến trình kèm xem trước từng ô đang vẽ
+- thanh trượt so sánh trước / sau, nút tải ảnh về
+
+Bộ cài tự lo mọi thứ (Python, PyTorch, ComfyUI, model) trong một thư mục riêng, không cần quyền quản trị, không đụng tới Python có sẵn trên máy.
+
+**Yêu cầu:** Internet, 5–25 GB ổ đĩa trống (tùy bộ model). Nên có GPU NVIDIA; không có GPU thì chỉ nên dùng chế độ Nhanh.
+
+### Windows
+
+1. Tải `BokinUpscaler-Setup.exe`: vào tab **Actions → Bokin app** của repo, mở lần chạy mới nhất, mục *Artifacts*.
+2. Chạy file. Nếu Windows SmartScreen cảnh báo (file chưa ký số), bấm **More info → Run anyway**.
+3. Chọn bộ model (SDXL khuyên dùng với GPU 8 GB+) rồi bấm Install. Một cửa sổ PowerShell sẽ hiện tiến độ tải (10–40 phút tùy mạng).
+4. Mở app bằng shortcut **Bokin Upscaler** trên Desktop.
+
+Không muốn dùng file .exe: tải mã nguồn (Code → Download ZIP), giải nén rồi chạy `installer\windows\Install-Bokin.bat`.
+
+Gỡ cài đặt: **Settings → Apps → Bokin Upscaler → Uninstall**.
+
+### Linux / macOS
+
+```bash
+git clone https://github.com/vhung-spec/Bokin-comfyui.git
+bash Bokin-comfyui/installer/install.sh            # cài vào ~/BokinUpscaler
+```
+
+Mở app bằng shortcut, hoặc chạy `~/BokinUpscaler/bokin-upscaler.sh` (macOS: `Bokin Upscaler.command`).
+
+### Dùng app
+
+- Khi mở app, một cửa sổ console sẽ chạy ComfyUI ở chế độ nền. Giữ cửa sổ này mở trong lúc dùng app; đóng nó là tắt app.
+- Ảnh kết quả được lưu tự động vào thư mục **Pictures/Bokin Upscaler**.
+- Muốn dùng checkpoint khác: chép file `.safetensors` vào `BokinUpscaler/ComfyUI/models/checkpoints` rồi mở lại app.
+- Nút **Mở ComfyUI** trên app mở giao diện ComfyUI đầy đủ, kèm các workflow mẫu bên dưới.
+
+## Cách 2 – Cài vào ComfyUI có sẵn
 
 ```bash
 cd ComfyUI/custom_nodes
@@ -25,13 +63,14 @@ git clone https://github.com/vhung-spec/Bokin-comfyui.git
 
 Khởi động lại ComfyUI. Bộ node không cần cài thêm thư viện Python nào ngoài những gì ComfyUI đã có.
 Nên dùng bản ComfyUI mới (2025 trở lên).
+Giao diện app có sẵn tại `http://127.0.0.1:8188/bokin`.
 
 ### Tải model
 
-Dùng script có sẵn (Linux / macOS / WSL / Git Bash):
+Dùng script có sẵn (Windows / Linux / macOS, chỉ cần Python):
 
 ```bash
-bash custom_nodes/Bokin-comfyui/scripts/download_models.sh /đường/dẫn/ComfyUI sdxl
+python custom_nodes/Bokin-comfyui/scripts/download_models.py /đường/dẫn/ComfyUI sdxl
 #   preset: fast | sd15 | sdxl | flux | all   (có thể ghi nhiều preset)
 ```
 
@@ -139,4 +178,17 @@ pip install torch pytest
 pytest tests
 ```
 
-Node ComfyUI nằm trong `bokin/nodes_upscale.py`.
+Node ComfyUI nằm trong `bokin/nodes_upscale.py`. Trang app nằm ở `web_app/index.html`, được phục vụ tại `/bokin` bởi `bokin/app_routes.py`.
+
+Bộ cài nằm trong `installer/`:
+
+| File | Vai trò |
+|---|---|
+| `setup.py` | Phần cài đặt chung cho mọi hệ điều hành: ComfyUI, PyTorch, node pack, model, shortcut |
+| `windows/setup.ps1`, `windows/Install-Bokin.bat` | Khởi động bộ cài trên Windows (tải uv + Python) |
+| `install.sh` | Khởi động bộ cài trên Linux / macOS |
+| `windows/bokin.iss` | Script Inno Setup để build `BokinUpscaler-Setup.exe` |
+| `bokin_launcher.py` | Chạy ComfyUI chạy nền và mở cửa sổ app |
+| `smoke_test.py` | Kiểm tra bản đã cài: mở app, upscale thử một ảnh |
+
+Workflow `.github/workflows/app.yml` chạy unit test, cài thử app trên Linux và Windows, rồi build file `.exe`. Khi push một tag `v*`, workflow tạo GitHub Release kèm file cài.

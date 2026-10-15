@@ -34,7 +34,33 @@ def _is_oom(e: Exception) -> bool:
     return isinstance(e, mm.OOM_EXCEPTION)
 
 
-def upscale_with_model(upscale_model, image: torch.Tensor) -> torch.Tensor:
+class TileProgress:
+    """One progress bar for every sampling step of every tile, with live previews."""
+
+    def __init__(self, model, total_steps: int):
+        self.pbar = comfy.utils.ProgressBar(max(total_steps, 1))
+        self.done = 0
+        try:
+            self.previewer = latent_preview.get_previewer(model.load_device, model.model.latent_format)
+        except Exception:  # previews are cosmetic, never fail the upscale over them
+            self.previewer = None
+
+    def callback(self, steps: int):
+        start = self.done
+        self.done += steps
+
+        def on_step(step, x0, x, total_steps):
+            preview = None
+            if self.previewer is not None:
+                if getattr(x0, "is_nested", False):
+                    x0 = x0.tensors[0]
+                preview = self.previewer.decode_latent_to_preview_image("JPEG", x0)
+            self.pbar.update_absolute(start + min(step + 1, steps), None, preview)
+
+        return on_step
+
+
+def upscale_with_model(upscale_model, image: torch.Tensor, show_progress: bool = True) -> torch.Tensor:
     """Run a model from "Load Upscale Model" once over a (B, H, W, C) image."""
     mm = comfy.model_management
     scale = upscale_model.scale
@@ -65,7 +91,7 @@ def upscale_with_model(upscale_model, image: torch.Tensor) -> torch.Tensor:
                     tile_y=tile,
                     overlap=overlap,
                     upscale_amount=scale,
-                    pbar=comfy.utils.ProgressBar(steps),
+                    pbar=comfy.utils.ProgressBar(steps) if show_progress else None,
                 )
                 break
             except Exception as e:
@@ -79,7 +105,9 @@ def upscale_with_model(upscale_model, image: torch.Tensor) -> torch.Tensor:
     return torch.clamp(out.movedim(-3, -1), 0, 1).float()
 
 
-def model_upscale(image: torch.Tensor, width: int, height: int, upscale_model=None) -> torch.Tensor:
+def model_upscale(
+    image: torch.Tensor, width: int, height: int, upscale_model=None, show_progress: bool = True
+) -> torch.Tensor:
     """Enlarge ``image`` to exactly ``width`` x ``height``.
 
     The upscale model is applied as many times as needed to reach the size,
@@ -88,10 +116,16 @@ def model_upscale(image: torch.Tensor, width: int, height: int, upscale_model=No
     """
     if upscale_model is not None:
         while image.shape[2] < width or image.shape[1] < height:
-            image = upscale_with_model(upscale_model, image)
+            image = upscale_with_model(upscale_model, image, show_progress)
             if upscale_model.scale <= 1:
                 break
     return tiling.resize_image(image, width, height)
+
+
+def plan_canvas_tiles(width: int, height: int, tile_size: int, tile_overlap: int) -> list[tiling.Tile]:
+    """Tiles for an image of this size, once padded to the tile grid."""
+    padded_w, padded_h = tiling.align_up(width, tiling.ALIGN), tiling.align_up(height, tiling.ALIGN)
+    return tiling.plan_tiles(padded_w, padded_h, tile_size, tile_overlap)
 
 
 def _apply_controlnet(positive, negative, control_net, hint, strength, end_percent, vae):
@@ -120,12 +154,13 @@ def refine_tiles(
     control_net=None,
     controlnet_strength: float = 0.0,
     controlnet_end: float = 1.0,
+    progress: TileProgress | None = None,
 ) -> torch.Tensor:
     """img2img over a single (1, H, W, C) image, one tile at a time."""
     _, height, width, _ = image.shape
     reference = tiling.pad_to_multiple(image)
     canvas = reference.clone()
-    tiles = tiling.plan_tiles(canvas.shape[2], canvas.shape[1], tile_size, tile_overlap)
+    tiles = plan_canvas_tiles(width, height, tile_size, tile_overlap)
     use_controlnet = control_net is not None and controlnet_strength > 0
 
     # One noise map for the whole canvas, cut per tile: overlapping tiles see
@@ -162,7 +197,7 @@ def refine_tiles(
             neg,
             latent,
             denoise=denoise,
-            callback=latent_preview.prepare_callback(model, steps),
+            callback=progress.callback(steps) if progress else latent_preview.prepare_callback(model, steps),
             disable_pbar=not comfy.utils.PROGRESS_BAR_ENABLED,
             seed=seed,
         )
@@ -285,6 +320,12 @@ class BokinUpscale:
         final_w, final_h = tiling.scaled_size(width, height, upscale_by)
         _check_size(final_w, final_h)
         schedule = tiling.scale_schedule(upscale_by, passes)
+        progress = None
+        if denoise > 0:
+            tiles_per_image = sum(
+                len(plan_canvas_tiles(*tiling.scaled_size(width, height, s), tile_size, tile_overlap)) for s in schedule
+            )
+            progress = TileProgress(model, image.shape[0] * tiles_per_image * steps)
 
         results, bases = [], []
         for i in range(image.shape[0]):
@@ -292,7 +333,7 @@ class BokinUpscale:
             plain = None
             for scale in schedule:
                 target_w, target_h = tiling.scaled_size(width, height, scale)
-                base = model_upscale(current, target_w, target_h, upscale_model)
+                base = model_upscale(current, target_w, target_h, upscale_model, show_progress=progress is None)
                 if plain is None and len(schedule) == 1:
                     plain = base
                 if denoise <= 0:
@@ -315,10 +356,11 @@ class BokinUpscale:
                     control_net=control_net,
                     controlnet_strength=controlnet_strength,
                     controlnet_end=controlnet_end,
+                    progress=progress,
                 )
                 current = color.color_fix(refined, base, color_fix)
             if plain is None:
-                plain = model_upscale(image[i:i + 1], final_w, final_h, upscale_model)
+                plain = model_upscale(image[i:i + 1], final_w, final_h, upscale_model, show_progress=progress is None)
             results.append(current)
             bases.append(plain)
 

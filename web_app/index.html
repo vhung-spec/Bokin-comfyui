@@ -1,0 +1,757 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bokin Upscaler</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%237c5cff'/%3E%3Cstop offset='1' stop-color='%2322d3ee'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='16' fill='url(%23g)'/%3E%3Ctext x='32' y='45' font-family='Arial' font-weight='700' font-size='38' text-anchor='middle' fill='white'%3EB%3C/text%3E%3C/svg%3E">
+<style>
+  :root {
+    --bg: #0e1015;
+    --panel: #151820;
+    --card: #1b1f29;
+    --card-2: #222734;
+    --border: #2a3040;
+    --text: #e9ecf3;
+    --muted: #9099ab;
+    --accent: #7c5cff;
+    --accent-2: #22d3ee;
+    --danger: #ff6b6b;
+    --ok: #3ddc97;
+    --radius: 14px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
+    font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+  button, select, input, textarea { font: inherit; color: inherit; }
+  a { color: var(--accent-2); }
+
+  .top { display: flex; align-items: center; gap: 16px; padding: 12px 20px; border-bottom: 1px solid var(--border);
+    background: var(--panel); position: sticky; top: 0; z-index: 5; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 17px; }
+  .logo { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; color: #fff;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2)); font-weight: 800; }
+  .device { margin-left: auto; color: var(--muted); font-size: 13px; }
+  .device b { color: var(--text); font-weight: 600; }
+  .top a { font-size: 13px; text-decoration: none; color: var(--muted); border: 1px solid var(--border);
+    padding: 5px 10px; border-radius: 8px; }
+  .top a:hover { color: var(--text); }
+
+  .layout { display: grid; grid-template-columns: 390px 1fr; min-height: calc(100% - 55px); }
+  .panel { background: var(--panel); border-right: 1px solid var(--border); padding: 16px; display: flex;
+    flex-direction: column; gap: 12px; overflow-y: auto; max-height: calc(100vh - 55px); position: sticky; top: 55px; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; }
+  .card h2 { margin: 0 0 10px; font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase;
+    letter-spacing: .04em; }
+
+  .drop { display: grid; place-items: center; min-height: 150px; border: 1.5px dashed var(--border); border-radius: 12px;
+    cursor: pointer; text-align: center; color: var(--muted); overflow: hidden; background: var(--card-2);
+    transition: border-color .15s, background .15s; }
+  .drop:hover, .drop.drag { border-color: var(--accent); background: #262b3b; }
+  .drop img { max-width: 100%; max-height: 220px; display: block; }
+  .drop small { color: var(--muted); }
+  .meta { color: var(--muted); font-size: 12.5px; margin-top: 8px; min-height: 1em; }
+  .meta b { color: var(--text); font-weight: 600; }
+
+  .seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 6px; }
+  .seg button, .modes button { background: var(--card-2); border: 1px solid var(--border); border-radius: 10px;
+    padding: 9px 6px; cursor: pointer; transition: border-color .15s, background .15s; }
+  .seg button:hover, .modes button:hover { border-color: #3c4458; }
+  .seg button.active, .modes button.active { border-color: var(--accent); background: rgba(124, 92, 255, .16); }
+  .seg button { font-weight: 600; }
+  .modes { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .modes button { text-align: left; padding: 10px 11px; }
+  .modes b { display: block; font-size: 14px; }
+  .modes span { display: block; color: var(--muted); font-size: 12px; margin-top: 2px; }
+
+  .row { display: grid; grid-template-columns: 110px 1fr; align-items: center; gap: 8px; margin-top: 10px; }
+  .row label, .grid label { color: var(--muted); font-size: 12.5px; }
+  select, input[type=number], input[type=text], textarea { width: 100%; background: var(--card-2); border: 1px solid var(--border);
+    border-radius: 9px; padding: 8px 10px; outline: none; }
+  select:focus, input:focus, textarea:focus { border-color: var(--accent); }
+  textarea { resize: vertical; min-height: 64px; margin-top: 10px; }
+  details { margin-top: 10px; }
+  summary { cursor: pointer; color: var(--muted); font-size: 13px; user-select: none; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+  .grid > div { display: flex; flex-direction: column; gap: 4px; }
+  .grid .wide { grid-column: 1 / -1; }
+  .inline { display: flex; gap: 6px; align-items: center; }
+  .inline input[type=checkbox] { accent-color: var(--accent); }
+
+  .go { margin-top: 2px; border: 0; border-radius: 12px; padding: 14px; font-size: 16px; font-weight: 700; color: #fff;
+    cursor: pointer; background: linear-gradient(135deg, var(--accent), #4f7bff 60%, var(--accent-2));
+    box-shadow: 0 8px 24px rgba(124, 92, 255, .25); }
+  .go:disabled { opacity: .5; cursor: not-allowed; box-shadow: none; }
+  .hint { color: var(--muted); font-size: 12px; text-align: center; }
+  .warn { color: #ffcf70; font-size: 12.5px; margin-top: 8px; }
+  .warn:empty { display: none; }
+
+  .stage { padding: 20px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+  .viewer { position: relative; flex: 1; min-height: 420px; border: 1px solid var(--border); border-radius: var(--radius);
+    background: repeating-conic-gradient(#171a22 0 25%, #12151b 0 50%) 0 0 / 24px 24px; overflow: hidden; }
+  .empty { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); text-align: center; padding: 20px; }
+  .empty .big { font-size: 42px; margin-bottom: 6px; }
+  .compare { position: absolute; inset: 0; --pos: 50%; cursor: ew-resize; touch-action: none; }
+  .compare img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; user-select: none;
+    -webkit-user-drag: none; pointer-events: none; }
+  .compare .before { clip-path: inset(0 calc(100% - var(--pos)) 0 0); image-rendering: auto; }
+  .compare .handle { position: absolute; top: 0; bottom: 0; left: var(--pos); width: 2px; background: #fff;
+    transform: translateX(-1px); box-shadow: 0 0 8px rgba(0, 0, 0, .6); pointer-events: none; }
+  .compare .handle::after { content: "⟷"; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    width: 34px; height: 34px; border-radius: 50%; background: #fff; color: #111; display: grid; place-items: center;
+    font-size: 16px; box-shadow: 0 2px 10px rgba(0, 0, 0, .5); }
+  .tag { position: absolute; top: 12px; padding: 3px 9px; border-radius: 999px; font-size: 12px; font-weight: 600;
+    background: rgba(0, 0, 0, .55); backdrop-filter: blur(4px); pointer-events: none; }
+  .tag.l { left: 12px; } .tag.r { right: 12px; }
+  .live { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(14, 16, 21, .72); }
+  .live img { max-width: 70%; max-height: 70%; border-radius: 10px; box-shadow: 0 10px 40px rgba(0, 0, 0, .5); }
+  .live p { position: absolute; bottom: 16px; margin: 0; color: var(--muted); font-size: 13px; }
+
+  .progress { display: flex; align-items: center; gap: 12px; }
+  .bar { flex: 1; height: 8px; border-radius: 99px; background: var(--card-2); overflow: hidden; border: 1px solid var(--border); }
+  .bar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    transition: width .25s; }
+  .bar.indet i { width: 30% !important; animation: indet 1.2s infinite ease-in-out; }
+  @keyframes indet { 0% { transform: translateX(-100%); } 100% { transform: translateX(340%); } }
+  #status { min-width: 260px; color: var(--muted); font-size: 13px; }
+  #status.err { color: var(--danger); }
+  #status.ok { color: var(--ok); }
+  .btn { background: var(--card-2); border: 1px solid var(--border); border-radius: 9px; padding: 7px 12px; cursor: pointer;
+    text-decoration: none; color: var(--text); font-size: 13px; white-space: nowrap; }
+  .btn:hover { border-color: #3c4458; }
+  .btn.primary { border-color: var(--accent); background: rgba(124, 92, 255, .18); }
+  .actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .actions .meta { margin: 0; }
+  .history { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 4px; }
+  .history button { flex: 0 0 auto; width: 92px; height: 92px; padding: 0; border-radius: 10px; overflow: hidden;
+    border: 2px solid var(--border); background: var(--card-2); cursor: pointer; }
+  .history button.active { border-color: var(--accent); }
+  .history img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .banner { margin: 16px 20px 0; padding: 12px 14px; border-radius: 12px; border: 1px solid #6b3a3a; background: #2a1719;
+    color: #ffb4b4; }
+  [hidden] { display: none !important; }
+
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; }
+    .panel { position: static; max-height: none; border-right: 0; border-bottom: 1px solid var(--border); }
+    #status { min-width: 0; }
+  }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand"><span class="logo">B</span>Bokin Upscaler</div>
+  <div class="device" id="device">Đang kết nối…</div>
+  <a href="/" target="_blank" rel="noopener">Mở ComfyUI ↗</a>
+</header>
+<div class="banner" id="banner" hidden></div>
+
+<main class="layout">
+  <aside class="panel">
+    <section class="card">
+      <h2>1 · Ảnh gốc</h2>
+      <label class="drop" id="drop">
+        <input type="file" id="file" accept="image/*" hidden>
+        <div id="dropEmpty">Kéo thả ảnh vào đây<br><small>hoặc bấm để chọn · dán bằng Ctrl+V</small></div>
+        <img id="thumb" alt="" hidden>
+      </label>
+      <div class="meta" id="srcMeta"></div>
+    </section>
+
+    <section class="card">
+      <h2>2 · Phóng to</h2>
+      <div class="seg" id="scaleSeg">
+        <button data-v="1.5">1.5x</button><button data-v="2">2x</button><button data-v="3">3x</button><button data-v="4">4x</button>
+      </div>
+      <div class="meta" id="sizeMeta">Chọn ảnh để xem kích thước kết quả</div>
+      <div class="warn" id="sizeWarn"></div>
+    </section>
+
+    <section class="card">
+      <h2>3 · Chế độ</h2>
+      <div class="modes" id="modes">
+        <button data-v="Fast"><b>Nhanh</b><span>Chỉ phóng to bằng AI, không vẽ lại</span></button>
+        <button data-v="Faithful"><b>Giữ nguyên</b><span>Thêm chi tiết nhẹ, sát ảnh gốc</span></button>
+        <button data-v="Balanced"><b>Cân bằng</b><span>Khuyên dùng cho đa số ảnh</span></button>
+        <button data-v="Creative"><b>Sáng tạo</b><span>Tái tạo nhiều chi tiết mới</span></button>
+      </div>
+      <div class="row"><label>Loại ảnh</label>
+        <div class="seg" id="styleSeg"><button data-v="photo">Ảnh thật</button><button data-v="anime">Anime / vẽ</button></div>
+      </div>
+    </section>
+
+    <section class="card" id="modelCard">
+      <h2>4 · Model vẽ lại chi tiết</h2>
+      <select id="ckpt"></select>
+      <div class="meta" id="ckptMeta"></div>
+      <textarea id="prompt" placeholder="Mô tả ảnh (không bắt buộc), vd: chân dung cô gái, tóc dài, ánh sáng tự nhiên"></textarea>
+      <details id="advanced">
+        <summary>Thiết lập nâng cao</summary>
+        <div class="grid">
+          <div><label for="family">Dòng model</label>
+            <select id="family"><option value="auto">Tự nhận</option><option value="sd15">SD 1.5</option>
+              <option value="sdxl">SDXL</option><option value="flux">Flux</option></select></div>
+          <div><label for="upscaler">Model phóng to</label><select id="upscaler"></select></div>
+          <div><label for="steps">Steps</label><input type="number" id="steps" min="1" max="100"></div>
+          <div><label for="cfg">CFG</label><input type="number" id="cfg" min="0" max="30" step="0.1"></div>
+          <div><label for="sampler">Sampler</label><select id="sampler"></select></div>
+          <div><label for="scheduler">Scheduler</label><select id="scheduler"></select></div>
+          <div><label for="denoise">Denoise (trống = theo chế độ)</label><input type="number" id="denoise" min="0" max="1" step="0.01" placeholder="tự động"></div>
+          <div><label for="passes">Số lần phóng</label><input type="number" id="passes" min="1" max="4"></div>
+          <div><label for="tile">Kích thước ô</label><input type="number" id="tile" min="256" max="4096" step="64"></div>
+          <div><label for="overlap">Chồng mép ô</label><input type="number" id="overlap" min="0" max="1024" step="32"></div>
+          <div><label for="controlnet">ControlNet Tile</label><select id="controlnet"></select></div>
+          <div><label for="cnStrength">Độ mạnh ControlNet</label><input type="number" id="cnStrength" min="0" max="2" step="0.05"></div>
+          <div><label for="colorFix">Sửa màu</label>
+            <select id="colorFix"><option value="wavelet">wavelet</option><option value="adain">adain</option><option value="none">không</option></select></div>
+          <div><label for="seed">Seed</label>
+            <div class="inline"><input type="number" id="seed" min="0"><label class="inline"><input type="checkbox" id="seedLock">giữ</label></div></div>
+          <div class="wide"><label for="negative">Negative prompt</label><input type="text" id="negative"></div>
+        </div>
+      </details>
+    </section>
+
+    <button class="go" id="go" disabled>✨ Upscale</button>
+    <div class="hint" id="goHint">Chọn một ảnh để bắt đầu</div>
+  </aside>
+
+  <section class="stage">
+    <div class="viewer" id="viewer">
+      <div class="empty" id="empty"><div><div class="big">🖼️</div>Kết quả sẽ hiện ở đây<br><small>Kéo thanh trượt để so sánh trước / sau</small></div></div>
+      <div class="compare" id="compare" hidden>
+        <img id="after" alt="Sau">
+        <img id="before" class="before" alt="Trước">
+        <div class="handle"></div>
+        <span class="tag l">Trước</span><span class="tag r">Sau</span>
+      </div>
+      <div class="live" id="live" hidden><img id="liveImg" alt=""><p id="liveText">Đang vẽ lại chi tiết…</p></div>
+    </div>
+    <div class="progress">
+      <div class="bar" id="bar"><i id="barFill"></i></div>
+      <span id="status">Sẵn sàng</span>
+      <button class="btn" id="cancel" hidden>Dừng</button>
+    </div>
+    <div class="actions">
+      <a class="btn primary" id="download" hidden>⬇ Tải ảnh về</a>
+      <a class="btn" id="openFull" target="_blank" rel="noopener" hidden>Xem kích thước thật ↗</a>
+      <span class="meta" id="resultMeta"></span>
+    </div>
+    <div class="history" id="history"></div>
+  </section>
+</main>
+
+<script>
+"use strict";
+const API = "/api";
+const $ = (id) => document.getElementById(id);
+
+const FAMILY = {
+  sd15: { label: "SD 1.5", steps: 20, cfg: 7, sampler: "dpmpp_2m", scheduler: "karras", tile: 768, overlap: 96 },
+  sdxl: { label: "SDXL", steps: 20, cfg: 6, sampler: "dpmpp_2m", scheduler: "karras", tile: 1024, overlap: 128 },
+  flux: { label: "Flux", steps: 20, cfg: 1, sampler: "euler", scheduler: "simple", tile: 1024, overlap: 128 },
+};
+const QUALITY = "masterpiece, best quality, highly detailed, sharp focus, intricate details, realistic texture";
+const NEGATIVE = "blurry, lowres, low quality, jpeg artifacts, noise, oversharpened, watermark, text, deformed, bad anatomy";
+const NODE_STATUS = {
+  LoadImage: "Đang đọc ảnh…",
+  CheckpointLoaderSimple: "Đang nạp model (lần đầu sẽ hơi lâu)…",
+  CLIPTextEncode: "Đang xử lý prompt…",
+  FluxGuidance: "Đang xử lý prompt…",
+  UpscaleModelLoader: "Đang nạp model phóng to…",
+  ControlNetLoader: "Đang nạp ControlNet…",
+  BokinUpscaleFast: "Đang phóng to…",
+  BokinUpscale: "Đang phóng to & vẽ lại chi tiết…",
+  SaveImage: "Đang lưu ảnh…",
+};
+const MAX_SIDE = 16384;
+const ALIGN = 32;
+
+const state = {
+  file: null, srcUrl: null, srcW: 0, srcH: 0,
+  scale: 2, mode: "Balanced", style: "photo",
+  lists: { ckpt: [], upscaler: [], controlnet: [], sampler: [], scheduler: [] },
+  device: null, ready: false,
+  run: null, results: [], active: -1,
+  clientId: (crypto.randomUUID ? crypto.randomUUID() : String(Math.random()).slice(2)),
+};
+
+// ---------- persistence (per browser, best effort) ----------
+const store = {
+  get(k, d) { try { const v = localStorage.getItem("bokin." + k); return v === null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem("bokin." + k, JSON.stringify(v)); } catch { /* private mode */ } },
+};
+
+// ---------- helpers ----------
+async function getJSON(url, opts) {
+  const r = await fetch(url, opts);
+  if (!r.ok) throw new Error(`${r.status} ${await r.text()}`);
+  return r.json();
+}
+function comboOptions(spec) {
+  if (!spec) return [];
+  if (Array.isArray(spec[0])) return spec[0];
+  if (spec[0] === "COMBO" && spec[1]) return spec[1].options || [];
+  return [];
+}
+function fillSelect(sel, values, labels) {
+  sel.innerHTML = "";
+  values.forEach((v, i) => { const o = document.createElement("option"); o.value = v; o.textContent = labels ? labels[i] : v; sel.appendChild(o); });
+}
+function guessFamily(name) {
+  const n = name.toLowerCase();
+  if (/flux/.test(n)) return "flux";
+  if (/(xl([^a-z]|$)|sdxl|pony|illustrious|noob|juggernaut|realvis|animagine|playground)/.test(n)) return "sdxl";
+  return "sd15";
+}
+function isFastModel(name) { return /lightning|hyper|turbo|lcm|dmd|schnell/i.test(name); }
+function family() { return $("family").value === "auto" ? guessFamily($("ckpt").value || "") : $("family").value; }
+function scaledSize() {
+  return [Math.max(1, Math.round(state.srcW * state.scale)), Math.max(1, Math.round(state.srcH * state.scale))];
+}
+function countTiles(w, h, tile, overlap) {
+  const axis = (len) => {
+    const L = Math.ceil(len / ALIGN), T = Math.min(Math.max(Math.floor(tile / ALIGN), 1), L);
+    if (T >= L) return 1;
+    const stride = Math.max(T - Math.ceil(Math.max(overlap, 0) / ALIGN), 1);
+    return Math.ceil((L - T) / stride) + 1;
+  };
+  return axis(w) * axis(h);
+}
+function fmtTime(s) { s = Math.round(s); return s < 60 ? `${s} giây` : `${Math.floor(s / 60)} phút ${s % 60} giây`; }
+function setStatus(text, cls) { const el = $("status"); el.textContent = text; el.className = cls || ""; }
+function setProgress(frac) {
+  const bar = $("bar");
+  if (frac === null) { bar.classList.add("indet"); return; }
+  bar.classList.remove("indet");
+  $("barFill").style.width = `${Math.round(Math.min(Math.max(frac, 0), 1) * 100)}%`;
+}
+
+// ---------- pickers ----------
+function pickUpscaler() {
+  const list = state.lists.upscaler;
+  const tries = state.style === "anime"
+    ? [/anime/i, /ultrasharp/i, /realesrgan_x4plus\.pth/i, /4x|x4/i]
+    : [/ultrasharp/i, /realesrgan_x4plus\.pth/i, /siax|remacri|nmkd/i, /4x|x4/i];
+  for (const re of tries) { const hit = list.find((n) => re.test(n) && !(state.style === "photo" && /anime/i.test(n))); if (hit) return hit; }
+  return list[0] || "";
+}
+function pickControlNet(fam) {
+  const tiles = state.lists.controlnet.filter((n) => /tile|upscal/i.test(n));
+  if (fam === "sdxl") return tiles.find((n) => /xl/i.test(n)) || "";
+  if (fam === "sd15") return tiles.find((n) => /sd15|sd1\.5|v11|sd-?1/i.test(n)) || tiles.find((n) => !/xl|flux/i.test(n)) || "";
+  return tiles.find((n) => /flux/i.test(n) && !/union/i.test(n)) || "";
+}
+function applyFamilyDefaults() {
+  const fam = family();
+  const d = FAMILY[fam];
+  const name = $("ckpt").value || "";
+  const fast = isFastModel(name);
+  $("steps").value = fam === "flux" && /schnell/i.test(name) ? 4 : fast ? 8 : d.steps;
+  $("cfg").value = fast && fam !== "flux" ? 2 : d.cfg;
+  $("sampler").value = fast && fam !== "flux" ? "dpmpp_sde" : d.sampler;
+  if (!$("sampler").value) $("sampler").value = d.sampler;
+  $("scheduler").value = d.scheduler;
+  $("tile").value = d.tile;
+  $("overlap").value = d.overlap;
+  $("controlnet").value = pickControlNet(fam);
+  $("cnStrength").value = fam === "sd15" ? 0.8 : 0.6;
+  $("ckptMeta").textContent = name
+    ? `${FAMILY[fam].label}${fast ? " · bản chạy nhanh" : ""}${$("controlnet").value ? " · có ControlNet Tile" : ""}`
+    : "";
+  refresh();
+}
+
+// ---------- UI state ----------
+function selectIn(groupId, value) {
+  for (const b of $(groupId).querySelectorAll("button")) b.classList.toggle("active", b.dataset.v === String(value));
+}
+function refresh() {
+  selectIn("scaleSeg", state.scale);
+  selectIn("modes", state.mode);
+  selectIn("styleSeg", state.style);
+  $("modelCard").hidden = state.mode === "Fast";
+
+  const warn = [];
+  if (state.file) {
+    const [w, h] = scaledSize();
+    let meta = `${state.srcW} × ${state.srcH} → <b>${w} × ${h}</b> px`;
+    if (state.mode !== "Fast") {
+      const tiles = countTiles(w, h, +$("tile").value || 1024, +$("overlap").value || 0) * (+$("passes").value || 1);
+      meta += ` · khoảng ${tiles} ô vẽ lại`;
+    }
+    $("sizeMeta").innerHTML = meta;
+    if (w > MAX_SIDE || h > MAX_SIDE) warn.push(`Ảnh kết quả vượt ${MAX_SIDE}px. Hãy chọn hệ số nhỏ hơn.`);
+    else if (state.mode !== "Fast" && state.device && state.device.type === "cpu")
+      warn.push("Máy đang chạy bằng CPU: chế độ vẽ lại sẽ rất chậm. Nên dùng chế độ Nhanh.");
+    else if (w * h > 36e6 && state.mode !== "Fast") warn.push("Ảnh rất lớn, sẽ mất khá nhiều thời gian.");
+  }
+  $("sizeWarn").textContent = warn.join(" ");
+
+  let hint = "";
+  if (!state.ready) hint = "Đang kết nối tới máy chủ Bokin…";
+  else if (!state.file) hint = "Chọn một ảnh để bắt đầu";
+  else if (state.mode !== "Fast" && !$("ckpt").value) hint = "Chưa có checkpoint nào. Hãy tải model hoặc dùng chế độ Nhanh.";
+  const [w, h] = state.file ? scaledSize() : [0, 0];
+  const blocked = !!hint || w > MAX_SIDE || h > MAX_SIDE || !!state.run;
+  $("go").disabled = blocked;
+  $("goHint").textContent = state.run ? "Đang xử lý…" : hint || "Ảnh kết quả được lưu tự động (app: thư mục Pictures/Bokin Upscaler)";
+}
+function saveSettings() {
+  store.set("settings", {
+    scale: state.scale, mode: state.mode, style: state.style, ckpt: $("ckpt").value, family: $("family").value,
+    prompt: $("prompt").value, negative: $("negative").value, colorFix: $("colorFix").value, passes: $("passes").value,
+  });
+}
+
+// ---------- image input ----------
+function setFile(file) {
+  if (!file || !file.type.startsWith("image/")) { setStatus("File này không phải ảnh.", "err"); return; }
+  if (state.srcUrl) URL.revokeObjectURL(state.srcUrl);
+  state.file = file;
+  state.srcUrl = URL.createObjectURL(file);
+  const img = new Image();
+  img.onload = () => {
+    state.srcW = img.naturalWidth; state.srcH = img.naturalHeight;
+    $("thumb").src = state.srcUrl; $("thumb").hidden = false; $("dropEmpty").hidden = true;
+    $("srcMeta").innerHTML = `<b>${file.name || "ảnh dán"}</b> · ${state.srcW} × ${state.srcH} px · ${(file.size / 1048576).toFixed(1)} MB`;
+    refresh();
+  };
+  img.onerror = () => setStatus("Không đọc được ảnh này.", "err");
+  img.src = state.srcUrl;
+}
+$("file").addEventListener("change", (e) => setFile(e.target.files[0]));
+for (const t of ["dragenter", "dragover"]) document.addEventListener(t, (e) => { e.preventDefault(); $("drop").classList.add("drag"); });
+for (const t of ["dragleave", "drop"]) document.addEventListener(t, (e) => { e.preventDefault(); $("drop").classList.remove("drag"); });
+document.addEventListener("drop", (e) => { const f = e.dataTransfer && e.dataTransfer.files[0]; if (f) setFile(f); });
+document.addEventListener("paste", (e) => {
+  for (const item of (e.clipboardData || {}).items || []) {
+    if (item.type.startsWith("image/")) { const f = item.getAsFile(); setFile(new File([f], f.name || "paste.png", { type: f.type })); break; }
+  }
+});
+
+// ---------- controls ----------
+function bindSeg(id, key, after) {
+  $(id).addEventListener("click", (e) => {
+    const b = e.target.closest("button"); if (!b) return;
+    state[key] = key === "scale" ? parseFloat(b.dataset.v) : b.dataset.v;
+    if (after) after();
+    refresh(); saveSettings();
+  });
+}
+bindSeg("scaleSeg", "scale");
+bindSeg("modes", "mode");
+bindSeg("styleSeg", "style", () => { $("upscaler").value = pickUpscaler(); });
+$("ckpt").addEventListener("change", () => { applyFamilyDefaults(); saveSettings(); });
+$("family").addEventListener("change", () => { applyFamilyDefaults(); saveSettings(); });
+for (const id of ["tile", "overlap", "passes"]) $(id).addEventListener("input", refresh);
+for (const id of ["prompt", "negative", "colorFix", "passes"]) $(id).addEventListener("change", saveSettings);
+
+// ---------- server ----------
+async function loadServer() {
+  try {
+    const [ck, um, cn, ks, bk, stats] = await Promise.all([
+      getJSON(`${API}/object_info/CheckpointLoaderSimple`),
+      getJSON(`${API}/object_info/UpscaleModelLoader`),
+      getJSON(`${API}/object_info/ControlNetLoader`),
+      getJSON(`${API}/object_info/KSampler`),
+      getJSON(`${API}/object_info/BokinUpscale`),
+      getJSON(`${API}/system_stats`),
+    ]);
+    if (!bk.BokinUpscale) throw new Error("Chưa cài bộ node Bokin trong ComfyUI.");
+    state.lists.ckpt = comboOptions(ck.CheckpointLoaderSimple.input.required.ckpt_name);
+    state.lists.upscaler = comboOptions(um.UpscaleModelLoader.input.required.model_name);
+    state.lists.controlnet = comboOptions(cn.ControlNetLoader.input.required.control_net_name);
+    state.lists.sampler = comboOptions(ks.KSampler.input.required.sampler_name);
+    state.lists.scheduler = comboOptions(ks.KSampler.input.required.scheduler);
+
+    const dev = (stats.devices || [])[0];
+    state.device = dev || null;
+    if (dev) {
+      const name = String(dev.name || dev.type).replace(/^cuda:\d+\s*/, "").replace(/\s*:\s*cudaMallocAsync$/, "");
+      const vram = dev.vram_total ? ` · ${(dev.vram_total / 1073741824).toFixed(0)} GB` : "";
+      $("device").innerHTML = dev.type === "cpu" ? "Thiết bị: <b>CPU</b> (không có GPU)" : `GPU: <b>${name}</b>${vram}`;
+    } else {
+      $("device").textContent = "";
+    }
+
+    fillSelect($("ckpt"), state.lists.ckpt, state.lists.ckpt.map((n) => `${n}  ·  ${FAMILY[guessFamily(n)].label}`));
+    fillSelect($("upscaler"), ["", ...state.lists.upscaler], ["(không dùng – bicubic)", ...state.lists.upscaler]);
+    fillSelect($("controlnet"), ["", ...state.lists.controlnet], ["(không dùng)", ...state.lists.controlnet]);
+    fillSelect($("sampler"), state.lists.sampler);
+    fillSelect($("scheduler"), state.lists.scheduler);
+
+    const saved = store.get("settings", {});
+    if (saved.scale) state.scale = saved.scale;
+    if (saved.mode) state.mode = saved.mode;
+    if (saved.style) state.style = saved.style;
+    if (saved.ckpt && state.lists.ckpt.includes(saved.ckpt)) $("ckpt").value = saved.ckpt;
+    else {
+      const prefer = state.lists.ckpt.find((n) => guessFamily(n) === "sdxl") || state.lists.ckpt[0];
+      if (prefer) $("ckpt").value = prefer;
+    }
+    if (saved.family) $("family").value = saved.family;
+    $("prompt").value = saved.prompt || "";
+    $("negative").value = saved.negative || NEGATIVE;
+    $("colorFix").value = saved.colorFix || "wavelet";
+    $("passes").value = saved.passes || 1;
+    $("seed").value = Math.floor(Math.random() * 1e9);
+    if (state.device && state.device.type === "cpu" && !saved.mode) state.mode = "Fast";
+    if (!state.lists.ckpt.length && state.mode !== "Fast") state.mode = "Fast";
+    $("upscaler").value = pickUpscaler();
+    applyFamilyDefaults();
+    state.ready = true;
+    $("banner").hidden = true;
+    refresh();
+  } catch (err) {
+    $("banner").hidden = false;
+    $("banner").textContent = `Không kết nối được máy chủ Bokin/ComfyUI: ${err.message}. Thử tải lại trang.`;
+    $("device").textContent = "Mất kết nối";
+  }
+}
+
+// ---------- run ----------
+function buildPrompt(imageName) {
+  const P = {}; let n = 0;
+  const add = (class_type, inputs) => { const id = String(++n); P[id] = { class_type, inputs }; return id; };
+  const img = add("LoadImage", { image: imageName });
+  const upscaler = $("upscaler").value;
+  const um = upscaler ? add("UpscaleModelLoader", { model_name: upscaler }) : null;
+  let work;
+  if (state.mode === "Fast") {
+    const inputs = { image: [img, 0], upscale_by: state.scale };
+    if (um) inputs.upscale_model = [um, 0];
+    work = add("BokinUpscaleFast", inputs);
+  } else {
+    const fam = family();
+    const ck = add("CheckpointLoaderSimple", { ckpt_name: $("ckpt").value });
+    const userPrompt = $("prompt").value.trim();
+    let pos = add("CLIPTextEncode", { clip: [ck, 1], text: userPrompt ? `${userPrompt}, ${QUALITY}` : QUALITY });
+    if (fam === "flux") pos = add("FluxGuidance", { conditioning: [pos, 0], guidance: 3.5 });
+    const neg = add("CLIPTextEncode", { clip: [ck, 1], text: fam === "flux" ? "" : $("negative").value });
+    if (!$("seedLock").checked) $("seed").value = Math.floor(Math.random() * 1e9);
+    const denoise = $("denoise").value.trim();
+    const inputs = {
+      image: [img, 0], model: [ck, 0], positive: [pos, 0], negative: [neg, 0], vae: [ck, 2],
+      upscale_by: state.scale, mode: denoise === "" ? state.mode : "Custom", seed: +$("seed").value || 0,
+      steps: +$("steps").value || 20, cfg: +$("cfg").value, sampler_name: $("sampler").value, scheduler: $("scheduler").value,
+      denoise: denoise === "" ? 0.35 : Math.min(Math.max(+denoise, 0), 1),
+      tile_size: +$("tile").value || 1024, tile_overlap: +$("overlap").value || 0, passes: +$("passes").value || 1,
+      color_fix: $("colorFix").value, controlnet_strength: +$("cnStrength").value || 0, controlnet_end: 1.0,
+    };
+    if (um) inputs.upscale_model = [um, 0];
+    if ($("controlnet").value) inputs.control_net = [add("ControlNetLoader", { control_net_name: $("controlnet").value }), 0];
+    work = add("BokinUpscale", inputs);
+  }
+  const save = add("SaveImage", { images: [work, 0], filename_prefix: "Bokin/upscale" });
+  return { prompt: P, work, save };
+}
+
+function promptErrorText(data) {
+  const parts = [];
+  if (data.error) parts.push(data.error.message || String(data.error));
+  for (const node of Object.values(data.node_errors || {})) {
+    for (const e of node.errors || []) parts.push(`${node.class_type}: ${e.details || e.message}`);
+  }
+  return parts.join(" · ") || "ComfyUI từ chối yêu cầu.";
+}
+
+async function upload(file) {
+  const ext = (file.name.match(/\.[a-z0-9]+$/i) || [".png"])[0];
+  const fd = new FormData();
+  fd.append("image", file, `src_${Date.now()}${ext}`);
+  fd.append("subfolder", "bokin");
+  fd.append("type", "input");
+  fd.append("overwrite", "true");
+  const r = await getJSON(`${API}/upload/image`, { method: "POST", body: fd });
+  return r.subfolder ? `${r.subfolder}/${r.name}` : r.name;
+}
+
+async function start() {
+  if (state.run) return;
+  saveSettings();
+  const srcUrl = state.srcUrl, srcW = state.srcW, srcH = state.srcH;
+  state.run = { id: null, done: false, started: performance.now(), srcUrl, srcW, srcH, mode: state.mode, scale: state.scale };
+  refresh();
+  $("cancel").hidden = false;
+  setProgress(null);
+  setStatus("Đang tải ảnh lên…");
+  try {
+    const imageName = await upload(state.file);
+    const built = buildPrompt(imageName);
+    Object.assign(state.run, built);
+    const r = await fetch(`${API}/prompt`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt: built.prompt, client_id: state.clientId }),
+    });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(promptErrorText(data));
+    state.run.id = data.prompt_id;
+    setStatus("Đang chờ đến lượt…");
+    pollHistory(state.run);
+  } catch (err) {
+    fail(err.message);
+  }
+}
+
+async function pollHistory(run) {
+  while (!run.done && state.run === run) {
+    await new Promise((res) => setTimeout(res, 1500));
+    if (run.done || state.run !== run) return;
+    try {
+      const h = await getJSON(`${API}/history/${run.id}`);
+      if (h[run.id]) await finish(run, h[run.id]);
+    } catch { /* server busy, try again */ }
+  }
+}
+
+async function finish(run, entry) {
+  if (run.done) return;
+  if (!entry) {
+    try { entry = (await getJSON(`${API}/history/${run.id}`))[run.id]; } catch { return; }
+    if (!entry || run.done) return;  // another caller may have finished it meanwhile
+  }
+  const status = entry.status || {};
+  if (status.status_str === "error") {
+    const err = (status.messages || []).find((m) => m[0] === "execution_error");
+    return fail(err ? err[1].exception_message : "Có lỗi khi xử lý.");
+  }
+  if ((status.messages || []).some((m) => m[0] === "execution_interrupted")) return fail("Đã dừng.");
+  const images = ((entry.outputs || {})[run.save] || {}).images || [];
+  if (!images.length) {
+    if (status.completed) fail("ComfyUI không trả về ảnh kết quả.");
+    return;
+  }
+  run.done = true;
+  const im = images[0];
+  const q = new URLSearchParams({ filename: im.filename, subfolder: im.subfolder || "", type: im.type || "output" });
+  const url = `${API}/view?${q}`;
+  const seconds = (performance.now() - run.started) / 1000;
+  const result = { url, filename: im.filename, srcUrl: run.srcUrl, seconds, mode: run.mode, scale: run.scale };
+  state.results.unshift(result);
+  state.run = null;
+  $("cancel").hidden = true;
+  $("live").hidden = true;
+  setProgress(1);
+  setStatus(`Xong sau ${fmtTime(seconds)}`, "ok");
+  showResult(0);
+  refresh();
+}
+
+function fail(message) {
+  if (state.run) state.run.done = true;
+  state.run = null;
+  $("cancel").hidden = true;
+  $("live").hidden = true;
+  setProgress(0);
+  setStatus(`Lỗi: ${message}`, "err");
+  refresh();
+}
+
+$("go").addEventListener("click", start);
+$("cancel").addEventListener("click", async () => {
+  setStatus("Đang dừng…");
+  try { await fetch(`${API}/interrupt`, { method: "POST" }); } catch { /* ignore */ }
+});
+
+// ---------- results ----------
+const MODE_LABEL = { Fast: "Nhanh", Faithful: "Giữ nguyên", Balanced: "Cân bằng", Creative: "Sáng tạo" };
+function showResult(i) {
+  const r = state.results[i]; if (!r) return;
+  state.active = i;
+  $("empty").hidden = true;
+  $("compare").hidden = false;
+  $("after").src = r.url;
+  $("before").src = r.srcUrl;
+  $("download").href = r.url; $("download").download = r.filename; $("download").hidden = false;
+  $("openFull").href = r.url; $("openFull").hidden = false;
+  const after = $("after");
+  const meta = () => { $("resultMeta").textContent = `${after.naturalWidth} × ${after.naturalHeight} px · ${r.scale}x · ${MODE_LABEL[r.mode] || r.mode} · ${fmtTime(r.seconds)}`; };
+  if (after.complete && after.naturalWidth) meta(); else after.onload = meta;
+  const hist = $("history"); hist.innerHTML = "";
+  state.results.forEach((res, k) => {
+    const b = document.createElement("button"); b.className = k === i ? "active" : ""; b.title = res.filename;
+    const im = document.createElement("img"); im.src = res.url; im.loading = "lazy"; b.appendChild(im);
+    b.addEventListener("click", () => showResult(k)); hist.appendChild(b);
+  });
+}
+(() => {
+  const cmp = $("compare");
+  let dragging = false;
+  const move = (e) => {
+    const rect = cmp.getBoundingClientRect();
+    const x = Math.min(Math.max((e.clientX - rect.left) / rect.width, 0), 1);
+    cmp.style.setProperty("--pos", `${x * 100}%`);
+  };
+  cmp.addEventListener("pointerdown", (e) => { dragging = true; cmp.setPointerCapture(e.pointerId); move(e); });
+  cmp.addEventListener("pointermove", (e) => { if (dragging) move(e); });
+  cmp.addEventListener("pointerup", () => { dragging = false; });
+})();
+
+// ---------- live progress over WebSocket ----------
+let liveUrl = null;
+function onBinary(buf) {
+  if (!state.run || buf.byteLength < 8) return;
+  const view = new DataView(buf);
+  const type = view.getUint32(0);
+  let blob;
+  if (type === 1) {
+    blob = new Blob([buf.slice(8)], { type: view.getUint32(4) === 2 ? "image/png" : "image/jpeg" });
+  } else if (type === 4) {
+    const len = view.getUint32(4);
+    let meta = {};
+    try { meta = JSON.parse(new TextDecoder().decode(buf.slice(8, 8 + len))); } catch { /* ignore */ }
+    if (meta.prompt_id && meta.prompt_id !== state.run.id) return;
+    blob = new Blob([buf.slice(8 + len)], { type: meta.image_type || "image/jpeg" });
+  } else {
+    return;
+  }
+  if (liveUrl) URL.revokeObjectURL(liveUrl);
+  liveUrl = URL.createObjectURL(blob);
+  $("liveImg").src = liveUrl;
+  $("live").hidden = false;
+}
+function onMessage(msg) {
+  const run = state.run;
+  const d = msg.data || {};
+  if (!run || !run.id || d.prompt_id !== run.id) return;
+  switch (msg.type) {
+    case "execution_start": setStatus("Bắt đầu xử lý…"); break;
+    case "execution_cached": setStatus("Dùng lại kết quả đã có…"); break;
+    case "executing":
+      if (d.node === null || d.node === undefined) { finish(run); break; }
+      setStatus(NODE_STATUS[(run.prompt[d.node] || {}).class_type] || "Đang xử lý…");
+      if (d.node !== run.work) setProgress(null);
+      break;
+    case "progress":
+      if (d.node === run.work && d.max) {
+        const frac = d.value / d.max;
+        setProgress(frac);
+        const elapsed = (performance.now() - run.started) / 1000;
+        const eta = frac > 0.02 ? ` · còn khoảng ${fmtTime(elapsed / frac - elapsed)}` : "";
+        const label = run.mode === "Fast" ? "Đang phóng to" : "Đang vẽ lại chi tiết";
+        setStatus(`${label}… ${Math.round(frac * 100)}%${eta}`);
+        $("liveText").textContent = `${label}… ${Math.round(frac * 100)}%`;
+      }
+      break;
+    case "execution_success": finish(run); break;
+    case "execution_error": fail(d.exception_message || "Có lỗi khi xử lý."); break;
+    case "execution_interrupted": fail("Đã dừng."); break;
+  }
+}
+function connect() {
+  const ws = new WebSocket(`${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/ws?clientId=${state.clientId}`);
+  ws.binaryType = "arraybuffer";
+  ws.onmessage = (e) => {
+    if (typeof e.data !== "string") return onBinary(e.data);
+    try { onMessage(JSON.parse(e.data)); } catch (err) { console.error(err); }
+  };
+  ws.onopen = () => { if (!state.ready) loadServer(); };
+  ws.onclose = () => setTimeout(connect, 1500);
+}
+
+refresh();
+loadServer();
+connect();
+</script>
+</body>
+</html>

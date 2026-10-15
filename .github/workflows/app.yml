@@ -1,0 +1,99 @@
+name: Bokin app
+
+on:
+  push:
+  workflow_dispatch:
+
+concurrency:
+  group: app-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install torch --index-url https://download.pytorch.org/whl/cpu && pip install pytest
+      - run: pytest tests
+
+  linux-app:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Bokin Upscaler (CPU, fast models)
+        run: bash installer/install.sh --dir "$RUNNER_TEMP/bokin" --models fast --torch cpu --yes --no-shortcut
+      - name: Smoke test
+        run: '"$RUNNER_TEMP/bokin/.venv/bin/python" installer/smoke_test.py --dir "$RUNNER_TEMP/bokin"'
+
+  windows-app:
+    runs-on: windows-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build installer
+        shell: pwsh
+        run: |
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) { choco install innosetup -y --no-progress | Out-Null }
+          $version = (Select-String -Path pyproject.toml -Pattern '^version = "(.+)"').Matches[0].Groups[1].Value
+          & $iscc "/DAppVersion=$version" installer\windows\bokin.iss
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Get-Item dist\BokinUpscaler-Setup.exe | Format-List Name, Length
+      - uses: actions/upload-artifact@v4
+        with:
+          name: BokinUpscaler-Setup
+          path: dist/BokinUpscaler-Setup.exe
+          if-no-files-found: error
+      - name: Install silently (CPU, fast models)
+        shell: pwsh
+        run: |
+          $p = Start-Process -FilePath dist\BokinUpscaler-Setup.exe -Wait -PassThru -ArgumentList `
+            '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/TASKS="fast,desktopicon"', '/DIR="C:\BokinTest"', '/LOG="C:\bokin-setup.log"'
+          "Setup exit code: $($p.ExitCode)"
+          if (Test-Path C:\BokinTest\install-log.txt) { Get-Content C:\BokinTest\install-log.txt -Encoding utf8 }
+          if ($p.ExitCode -ne 0) { Get-Content C:\bokin-setup.log; exit 1 }
+          if (-not (Test-Path "C:\BokinTest\Bokin Upscaler.bat")) { throw "launcher missing" }
+          if (-not (Test-Path "$([Environment]::GetFolderPath('Desktop'))\Bokin Upscaler.lnk")) { throw "desktop shortcut missing" }
+      - name: Smoke test
+        shell: pwsh
+        run: |
+          C:\BokinTest\.venv\Scripts\python.exe installer\smoke_test.py --dir C:\BokinTest
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Shortcuts from the zip installer path
+        shell: pwsh
+        run: |
+          $desktop = [Environment]::GetFolderPath('Desktop')
+          Remove-Item "$desktop\Bokin Upscaler.lnk" -ErrorAction SilentlyContinue
+          C:\BokinTest\.venv\Scripts\python.exe -c "import sys; from pathlib import Path; sys.path.insert(0, 'installer'); import setup; setup.create_shortcuts(Path(r'C:\BokinTest'), Path(r'C:\BokinTest\Bokin Upscaler.bat'))"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $lnk = (New-Object -ComObject WScript.Shell).CreateShortcut("$desktop\Bokin Upscaler.lnk")
+          "Shortcut target: $($lnk.TargetPath)"
+          if ($lnk.TargetPath -ne 'C:\BokinTest\Bokin Upscaler.bat') { throw "wrong shortcut target" }
+      - name: Uninstall
+        shell: pwsh
+        run: |
+          $p = Start-Process -FilePath C:\BokinTest\unins000.exe -Wait -PassThru -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES'
+          "Uninstall exit code: $($p.ExitCode)"
+          # The uninstaller hands over to a copy of itself, so wait for the folder to go.
+          for ($i = 0; $i -lt 60 -and (Test-Path C:\BokinTest\ComfyUI); $i++) { Start-Sleep -Seconds 5 }
+          if (Test-Path C:\BokinTest\ComfyUI) { throw "ComfyUI folder was not removed" }
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [unit-tests, linux-app, windows-app]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: BokinUpscaler-Setup
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: BokinUpscaler-Setup.exe
+          prerelease: true

@@ -125,6 +125,10 @@ Kéo thả file trong thư mục [`example_workflows/`](example_workflows) vào 
 Cách dùng: chọn ảnh ở **Load Image**, chỉnh `upscale_by` và `mode` rồi bấm **Run**.
 Ô **Save Image** là kết quả. Ô **Before** là ảnh chỉ phóng to bằng model, để so sánh trước/sau.
 
+## Workflow cho TensorArt
+
+TensorArt không cho cài node riêng, nên không chạy được bộ node Bokin. Thư mục [`tensorart/`](tensorart) có sẵn workflow Flux phóng to kiểu ảnh chụp, chỉ dùng các node TensorArt có (node chuẩn của ComfyUI và Comfyui_TTP_Toolset), kèm hướng dẫn chọn model và chỉnh thông số.
+
 ## Các node
 
 ### Bokin Upscale (Shakker-style)

@@ -1,0 +1,1342 @@
+{
+  "last_node_id": 25,
+  "last_link_id": 30,
+  "nodes": [
+    {
+      "id": 1,
+      "type": "LoadImage",
+      "pos": [
+        40,
+        120
+      ],
+      "size": [
+        380,
+        460
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            1
+          ],
+          "slot_index": 0
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": [],
+          "slot_index": 1
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "example.png",
+        "image"
+      ]
+    },
+    {
+      "id": 2,
+      "type": "ImageScaleToTotalPixels",
+      "pos": [
+        40,
+        620
+      ],
+      "size": [
+        380,
+        130
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 1
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            3
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "ImageScaleToTotalPixels"
+      },
+      "title": "Chuẩn hoá ảnh gốc (~1.5 MP)",
+      "widgets_values": [
+        "lanczos",
+        1.5,
+        8
+      ]
+    },
+    {
+      "id": 3,
+      "type": "Note",
+      "pos": [
+        40,
+        780
+      ],
+      "size": [
+        380,
+        230
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "properties": {
+        "text": ""
+      },
+      "widgets_values": [
+        "BOKIN PHOTOREAL UPSCALE (Flux) - cho TensorArt\n\nPhóng to ảnh lên ~4K và vẽ lại chi tiết cho giống ảnh chụp thật.\n\nCÁCH DÙNG\n1. Load Image: chọn ảnh.\n2. Prompt: thêm 1 câu mô tả ảnh vào ĐẦU prompt, vd. \"portrait of an old fisherman, \" - kết quả sẽ thật hơn rõ rệt.\n3. Bấm Run.\n\nCHỈNH NHANH\n- Độ sáng tạo (BasicScheduler > denoise): 0.25 giữ sát ảnh gốc, 0.30 cân bằng (mặc định), 0.35 thêm nhiều chi tiết (dễ sinh chi tiết lạ).\n- Kích thước ra (Scale to 4K > megapixels): 8 = 4K, 4 = 2.7K, 16 = 5.6K (tốn credit gấp đôi).\n- Tiết kiệm credit: steps 20 -> 12.\n- Ảnh chân dung cận mặt: width/height_factor 3 -> 2 để không cắt ngang khuôn mặt.\n\nMODEL (bấm vào ô để chọn nếu TensorArt báo không tìm thấy)\n- FLUX.1 dev (Load Diffusion Model) + clip_l + t5xxl + ae.safetensors - phải cùng là FLUX.1.\n  KHÔNG dùng flux2_dev_* với bộ clip_l/t5xxl/ae (gây lỗi Model/system issue).\n- Upscale model: 4x_RealisticRescaler (ảnh chụp) hoặc 4x_NMKD-Siax / 4x-UltraSharp.\n- Có LoRA realism cho FLUX.1 trên TensorArt thì nối thêm LoraLoaderModelOnly sau Load Diffusion Model."
+      ],
+      "color": "#432",
+      "bgcolor": "#653"
+    },
+    {
+      "id": 4,
+      "type": "UpscaleModelLoader",
+      "pos": [
+        480,
+        120
+      ],
+      "size": [
+        380,
+        60
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "UPSCALE_MODEL",
+          "type": "UPSCALE_MODEL",
+          "links": [
+            2
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "UpscaleModelLoader"
+      },
+      "widgets_values": [
+        "4x_RealisticRescaler_100000_G.pth"
+      ]
+    },
+    {
+      "id": 5,
+      "type": "ImageUpscaleWithModel",
+      "pos": [
+        480,
+        220
+      ],
+      "size": [
+        380,
+        50
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "upscale_model",
+          "type": "UPSCALE_MODEL",
+          "link": 2
+        },
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 3
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            4
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "ImageUpscaleWithModel"
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 6,
+      "type": "ImageScaleToTotalPixels",
+      "pos": [
+        480,
+        310
+      ],
+      "size": [
+        380,
+        130
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 4
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            5,
+            6,
+            9
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "ImageScaleToTotalPixels"
+      },
+      "title": "Scale to 4K (megapixels)",
+      "widgets_values": [
+        "lanczos",
+        8.0,
+        16
+      ]
+    },
+    {
+      "id": 7,
+      "type": "TTP_Tile_image_size",
+      "pos": [
+        480,
+        480
+      ],
+      "size": [
+        380,
+        130
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 5
+        }
+      ],
+      "outputs": [
+        {
+          "name": "tile_width",
+          "type": "INT",
+          "links": [
+            7
+          ],
+          "slot_index": 0
+        },
+        {
+          "name": "tile_height",
+          "type": "INT",
+          "links": [
+            8
+          ],
+          "slot_index": 1
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "TTP_Tile_image_size"
+      },
+      "widgets_values": [
+        3,
+        3,
+        0.1
+      ]
+    },
+    {
+      "id": 8,
+      "type": "TTP_Image_Tile_Batch",
+      "pos": [
+        480,
+        650
+      ],
+      "size": [
+        380,
+        120
+      ],
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 6
+        },
+        {
+          "name": "tile_width",
+          "type": "INT",
+          "widget": {
+            "name": "tile_width"
+          },
+          "link": 7
+        },
+        {
+          "name": "tile_height",
+          "type": "INT",
+          "widget": {
+            "name": "tile_height"
+          },
+          "link": 8
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGES",
+          "type": "IMAGE",
+          "links": [
+            15
+          ],
+          "slot_index": 0
+        },
+        {
+          "name": "POSITIONS",
+          "type": "LIST",
+          "links": [
+            27
+          ],
+          "slot_index": 1
+        },
+        {
+          "name": "ORIGINAL_SIZE",
+          "type": "TUPLE",
+          "links": [
+            28
+          ],
+          "slot_index": 2
+        },
+        {
+          "name": "GRID_SIZE",
+          "type": "TUPLE",
+          "links": [
+            29
+          ],
+          "slot_index": 3
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "TTP_Image_Tile_Batch"
+      },
+      "widgets_values": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "id": 9,
+      "type": "PreviewImage",
+      "pos": [
+        480,
+        810
+      ],
+      "size": [
+        380,
+        200
+      ],
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 9
+        }
+      ],
+      "outputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "links": [],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "PreviewImage"
+      },
+      "title": "Trước khi vẽ lại (chỉ model 4x)",
+      "widgets_values": []
+    },
+    {
+      "id": 10,
+      "type": "UNETLoader",
+      "pos": [
+        920,
+        120
+      ],
+      "size": [
+        380,
+        90
+      ],
+      "flags": {},
+      "order": 9,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            12,
+            14
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "UNETLoader"
+      },
+      "title": "Load Diffusion Model (FLUX.1 dev)",
+      "widgets_values": [
+        "flux1-dev.safetensors",
+        "fp8_e4m3fn"
+      ]
+    },
+    {
+      "id": 11,
+      "type": "DualCLIPLoader",
+      "pos": [
+        920,
+        250
+      ],
+      "size": [
+        380,
+        140
+      ],
+      "flags": {},
+      "order": 10,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "CLIP",
+          "type": "CLIP",
+          "links": [
+            10
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "DualCLIPLoader"
+      },
+      "widgets_values": [
+        "clip_l.safetensors",
+        "t5xxl_fp8_e4m3fn.safetensors",
+        "flux",
+        "default"
+      ]
+    },
+    {
+      "id": 12,
+      "type": "VAELoader",
+      "pos": [
+        920,
+        430
+      ],
+      "size": [
+        380,
+        60
+      ],
+      "flags": {},
+      "order": 11,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "VAE",
+          "type": "VAE",
+          "links": [
+            16,
+            24
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "VAELoader"
+      },
+      "widgets_values": [
+        "ae.safetensors"
+      ]
+    },
+    {
+      "id": 13,
+      "type": "CLIPTextEncode",
+      "pos": [
+        920,
+        530
+      ],
+      "size": [
+        380,
+        200
+      ],
+      "flags": {},
+      "order": 12,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "clip",
+          "type": "CLIP",
+          "link": 10
+        }
+      ],
+      "outputs": [
+        {
+          "name": "CONDITIONING",
+          "type": "CONDITIONING",
+          "links": [
+            11
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CLIPTextEncode"
+      },
+      "title": "Prompt (thêm mô tả ảnh ở đầu)",
+      "widgets_values": [
+        "a high-resolution professional photograph, sharp focus, realistic natural textures, fine skin pores, individual hair strands, detailed fabric weave, natural lighting, true-to-life colors, subtle film grain, shot on a full-frame camera"
+      ]
+    },
+    {
+      "id": 14,
+      "type": "FluxGuidance",
+      "pos": [
+        920,
+        770
+      ],
+      "size": [
+        380,
+        60
+      ],
+      "flags": {},
+      "order": 13,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "conditioning",
+          "type": "CONDITIONING",
+          "link": 11
+        }
+      ],
+      "outputs": [
+        {
+          "name": "CONDITIONING",
+          "type": "CONDITIONING",
+          "links": [
+            13
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "FluxGuidance"
+      },
+      "widgets_values": [
+        2.2
+      ]
+    },
+    {
+      "id": 15,
+      "type": "BasicGuider",
+      "pos": [
+        920,
+        870
+      ],
+      "size": [
+        380,
+        50
+      ],
+      "flags": {},
+      "order": 14,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": 12
+        },
+        {
+          "name": "conditioning",
+          "type": "CONDITIONING",
+          "link": 13
+        }
+      ],
+      "outputs": [
+        {
+          "name": "GUIDER",
+          "type": "GUIDER",
+          "links": [
+            19
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "BasicGuider"
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 16,
+      "type": "RandomNoise",
+      "pos": [
+        1360,
+        120
+      ],
+      "size": [
+        380,
+        90
+      ],
+      "flags": {},
+      "order": 15,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "NOISE",
+          "type": "NOISE",
+          "links": [
+            18
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "RandomNoise"
+      },
+      "widgets_values": [
+        42,
+        "fixed"
+      ]
+    },
+    {
+      "id": 17,
+      "type": "KSamplerSelect",
+      "pos": [
+        1360,
+        250
+      ],
+      "size": [
+        380,
+        60
+      ],
+      "flags": {},
+      "order": 16,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "SAMPLER",
+          "type": "SAMPLER",
+          "links": [
+            20
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "KSamplerSelect"
+      },
+      "widgets_values": [
+        "euler"
+      ]
+    },
+    {
+      "id": 18,
+      "type": "BasicScheduler",
+      "pos": [
+        1360,
+        350
+      ],
+      "size": [
+        380,
+        110
+      ],
+      "flags": {},
+      "order": 17,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": 14
+        }
+      ],
+      "outputs": [
+        {
+          "name": "SIGMAS",
+          "type": "SIGMAS",
+          "links": [
+            21
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "BasicScheduler"
+      },
+      "widgets_values": [
+        "beta",
+        20,
+        0.3
+      ]
+    },
+    {
+      "id": 19,
+      "type": "VAEEncode",
+      "pos": [
+        1360,
+        500
+      ],
+      "size": [
+        380,
+        50
+      ],
+      "flags": {},
+      "order": 18,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "pixels",
+          "type": "IMAGE",
+          "link": 15
+        },
+        {
+          "name": "vae",
+          "type": "VAE",
+          "link": 16
+        }
+      ],
+      "outputs": [
+        {
+          "name": "LATENT",
+          "type": "LATENT",
+          "links": [
+            17
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "VAEEncode"
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 20,
+      "type": "RebatchLatents",
+      "pos": [
+        1360,
+        590
+      ],
+      "size": [
+        380,
+        60
+      ],
+      "flags": {},
+      "order": 19,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "latents",
+          "type": "LATENT",
+          "link": 17
+        }
+      ],
+      "outputs": [
+        {
+          "name": "LATENT",
+          "type": "LATENT",
+          "links": [
+            22
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "RebatchLatents"
+      },
+      "title": "Từng ô một (tiết kiệm VRAM)",
+      "widgets_values": [
+        1
+      ]
+    },
+    {
+      "id": 21,
+      "type": "SamplerCustomAdvanced",
+      "pos": [
+        1360,
+        690
+      ],
+      "size": [
+        380,
+        110
+      ],
+      "flags": {},
+      "order": 20,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "noise",
+          "type": "NOISE",
+          "link": 18
+        },
+        {
+          "name": "guider",
+          "type": "GUIDER",
+          "link": 19
+        },
+        {
+          "name": "sampler",
+          "type": "SAMPLER",
+          "link": 20
+        },
+        {
+          "name": "sigmas",
+          "type": "SIGMAS",
+          "link": 21
+        },
+        {
+          "name": "latent_image",
+          "type": "LATENT",
+          "link": 22
+        }
+      ],
+      "outputs": [
+        {
+          "name": "output",
+          "type": "LATENT",
+          "links": [
+            23
+          ],
+          "slot_index": 0
+        },
+        {
+          "name": "denoised_output",
+          "type": "LATENT",
+          "links": [],
+          "slot_index": 1
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "SamplerCustomAdvanced"
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 22,
+      "type": "VAEDecode",
+      "pos": [
+        1360,
+        840
+      ],
+      "size": [
+        380,
+        50
+      ],
+      "flags": {},
+      "order": 21,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "samples",
+          "type": "LATENT",
+          "link": 23
+        },
+        {
+          "name": "vae",
+          "type": "VAE",
+          "link": 24
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            25
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "VAEDecode"
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 23,
+      "type": "RebatchImages",
+      "pos": [
+        1360,
+        930
+      ],
+      "size": [
+        380,
+        60
+      ],
+      "flags": {},
+      "order": 22,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 25
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            26
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "RebatchImages"
+      },
+      "title": "Gom các ô lại",
+      "widgets_values": [
+        64
+      ]
+    },
+    {
+      "id": 24,
+      "type": "TTP_Image_Assy",
+      "pos": [
+        1800,
+        120
+      ],
+      "size": [
+        380,
+        130
+      ],
+      "flags": {},
+      "order": 23,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "tiles",
+          "type": "IMAGE",
+          "link": 26
+        },
+        {
+          "name": "positions",
+          "type": "LIST",
+          "link": 27
+        },
+        {
+          "name": "original_size",
+          "type": "TUPLE",
+          "link": 28
+        },
+        {
+          "name": "grid_size",
+          "type": "TUPLE",
+          "link": 29
+        }
+      ],
+      "outputs": [
+        {
+          "name": "RECONSTRUCTED_IMAGE",
+          "type": "IMAGE",
+          "links": [
+            30
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "TTP_Image_Assy"
+      },
+      "widgets_values": [
+        128
+      ]
+    },
+    {
+      "id": 25,
+      "type": "SaveImage",
+      "pos": [
+        1800,
+        290
+      ],
+      "size": [
+        560,
+        720
+      ],
+      "flags": {},
+      "order": 24,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 30
+        }
+      ],
+      "outputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "links": [],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "SaveImage"
+      },
+      "title": "Kết quả",
+      "widgets_values": [
+        "Bokin/photoreal"
+      ]
+    }
+  ],
+  "links": [
+    [
+      1,
+      1,
+      0,
+      2,
+      0,
+      "IMAGE"
+    ],
+    [
+      2,
+      4,
+      0,
+      5,
+      0,
+      "UPSCALE_MODEL"
+    ],
+    [
+      3,
+      2,
+      0,
+      5,
+      1,
+      "IMAGE"
+    ],
+    [
+      4,
+      5,
+      0,
+      6,
+      0,
+      "IMAGE"
+    ],
+    [
+      5,
+      6,
+      0,
+      7,
+      0,
+      "IMAGE"
+    ],
+    [
+      6,
+      6,
+      0,
+      8,
+      0,
+      "IMAGE"
+    ],
+    [
+      7,
+      7,
+      0,
+      8,
+      1,
+      "INT"
+    ],
+    [
+      8,
+      7,
+      1,
+      8,
+      2,
+      "INT"
+    ],
+    [
+      9,
+      6,
+      0,
+      9,
+      0,
+      "IMAGE"
+    ],
+    [
+      10,
+      11,
+      0,
+      13,
+      0,
+      "CLIP"
+    ],
+    [
+      11,
+      13,
+      0,
+      14,
+      0,
+      "CONDITIONING"
+    ],
+    [
+      12,
+      10,
+      0,
+      15,
+      0,
+      "MODEL"
+    ],
+    [
+      13,
+      14,
+      0,
+      15,
+      1,
+      "CONDITIONING"
+    ],
+    [
+      14,
+      10,
+      0,
+      18,
+      0,
+      "MODEL"
+    ],
+    [
+      15,
+      8,
+      0,
+      19,
+      0,
+      "IMAGE"
+    ],
+    [
+      16,
+      12,
+      0,
+      19,
+      1,
+      "VAE"
+    ],
+    [
+      17,
+      19,
+      0,
+      20,
+      0,
+      "LATENT"
+    ],
+    [
+      18,
+      16,
+      0,
+      21,
+      0,
+      "NOISE"
+    ],
+    [
+      19,
+      15,
+      0,
+      21,
+      1,
+      "GUIDER"
+    ],
+    [
+      20,
+      17,
+      0,
+      21,
+      2,
+      "SAMPLER"
+    ],
+    [
+      21,
+      18,
+      0,
+      21,
+      3,
+      "SIGMAS"
+    ],
+    [
+      22,
+      20,
+      0,
+      21,
+      4,
+      "LATENT"
+    ],
+    [
+      23,
+      21,
+      0,
+      22,
+      0,
+      "LATENT"
+    ],
+    [
+      24,
+      12,
+      0,
+      22,
+      1,
+      "VAE"
+    ],
+    [
+      25,
+      22,
+      0,
+      23,
+      0,
+      "IMAGE"
+    ],
+    [
+      26,
+      23,
+      0,
+      24,
+      0,
+      "IMAGE"
+    ],
+    [
+      27,
+      8,
+      1,
+      24,
+      1,
+      "LIST"
+    ],
+    [
+      28,
+      8,
+      2,
+      24,
+      2,
+      "TUPLE"
+    ],
+    [
+      29,
+      8,
+      3,
+      24,
+      3,
+      "TUPLE"
+    ],
+    [
+      30,
+      24,
+      0,
+      25,
+      0,
+      "IMAGE"
+    ]
+  ],
+  "groups": [
+    {
+      "title": "1. Ảnh gốc",
+      "bounding": [
+        20,
+        20,
+        420,
+        1010
+      ],
+      "color": "#3f789e",
+      "font_size": 24,
+      "flags": {}
+    },
+    {
+      "title": "2. Phóng to 4x + chia ô",
+      "bounding": [
+        460,
+        20,
+        420,
+        1010
+      ],
+      "color": "#3a6b3a",
+      "font_size": 24,
+      "flags": {}
+    },
+    {
+      "title": "3. Model FLUX.1 dev + prompt",
+      "bounding": [
+        900,
+        20,
+        420,
+        1010
+      ],
+      "color": "#6b4f8a",
+      "font_size": 24,
+      "flags": {}
+    },
+    {
+      "title": "4. Vẽ lại từng ô",
+      "bounding": [
+        1340,
+        20,
+        420,
+        1010
+      ],
+      "color": "#8a6a3a",
+      "font_size": 24,
+      "flags": {}
+    },
+    {
+      "title": "5. Ghép ảnh + lưu",
+      "bounding": [
+        1780,
+        20,
+        600,
+        1010
+      ],
+      "color": "#3f789e",
+      "font_size": 24,
+      "flags": {}
+    }
+  ],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 0.6,
+      "offset": [
+        60,
+        120
+      ]
+    }
+  },
+  "version": 0.4
+}

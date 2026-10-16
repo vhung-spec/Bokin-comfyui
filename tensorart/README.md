@@ -88,7 +88,7 @@ Hai file `Bokin_Flux2_*` giữ nguyên từng node của workflow "4k-upscale" t
 | Text encoder | **Load CLIP (Dual)**: `clip_l` + `qwen2.5vl-7b`, type `flux` | **Load CLIP** (1 ô): `mistral_3_small_flux2_fp8`, type **`flux2`** | FLUX.2 dev đọc prompt bằng Mistral Small 3.1, không dùng clip_l, t5xxl hay Qwen2.5-VL |
 | VAE | `ae.safetensors` | **`flux2-vae.safetensors`** | `ae` là VAE của FLUX.1. FLUX.2 dùng VAE mới, lưu gấp đôi dữ liệu cho mỗi ô 16×16 pixel |
 | denoise | 0.25 | **0.12** | Xem giải thích bên dưới |
-| Kích thước ô | lấy thẳng từ TTP_Tile_image_size | thêm **4 node "Làm tròn ô"** (easy mathInt) đưa về bội số của 16 | Xem giải thích bên dưới |
+| Kích thước ô | resolution_steps 1, overlap_rate 0.20 | **resolution_steps 44, overlap_rate 0.125** (vẫn 3×3 ô) | Giữ mỗi ô chia hết cho 16. Xem giải thích bên dưới |
 
 **Vì sao denoise phải hạ xuống 0.12.** FLUX.2 đặt lịch khử nhiễu lệch về phía nhiễu cao hơn FLUX.1 (shift 2.02 so với 1.15). Với sgm_uniform 10 bước:
 
@@ -102,7 +102,10 @@ Mức nhiễu này được tính bằng chính mã ComfyUI. Chỉnh thêm: 0.10
 
 - Với ảnh 16:9 ở 8 MP, mỗi ô rộng 1480 pixel. Con số này không chia hết cho 16.
 - VAE cắt mỗi ô còn 1472 pixel. TTP_Image_Assy vẫn ghép theo vị trí tính cho 1480, nên các ô lệch nhau vài pixel. Phần trộn mép 256 pixel chồng hai hình lệch lên nhau, tạo vệt mờ và bóng ma ở mọi đường nối. Ảnh ra cũng hụt bề ngang.
-- Bản đầu tiên của hai file FLUX.2 bị đúng lỗi này. Bản hiện tại thêm 4 node `easy mathInt` (chia 16 rồi nhân 16) giữa TTP_Tile_image_size và TTP_Image_Tile_Batch. **Đừng xoá 4 node này.**
+- Bản đầu tiên của hai file FLUX.2 bị đúng lỗi này.
+- Bản hiện tại không thêm node nào, chỉ đổi 2 thông số: `resolution_steps` của Scale Image to Total Pixels thành **44**, và `overlap_rate` của TTP_Tile_image_size thành **0.125**. Với 3×3 ô, mỗi ô khi đó rộng đúng bằng cạnh ảnh ÷ 2.75. Cạnh ảnh là bội số của 44 nên ô luôn chia hết cho 16, với mọi tỉ lệ ảnh. Ví dụ ảnh 3872×2156 cho ô 1408×784.
+- Phần chồng mép giảm từ 20% xuống 12.5%, nên tổng diện tích phải vẽ lại cũng giảm, tốn ít credit hơn một chút.
+- **Giữ `width_factor` và `height_factor` = 3.** Đổi số ô thì cách tính trên không còn đúng.
 
 **Bản klein 4B** dùng cùng workflow, chỉ đổi:
 
@@ -148,7 +151,7 @@ Bảng chưa tính phần cố định của mỗi lần chạy: tải model, ph
   - Bản Scenery: ảnh phong cảnh 1500×844 của công ty cho ra đúng 3840×2160, 9 ô được vẽ lại lần lượt rồi ghép.
 - Bản FLUX.2: chạy phần chia ô, mã hoá, giải mã và ghép với một VAE đúng kiến trúc FLUX.2. VAE này dùng trọng số ngẫu nhiên, nhưng cắt ảnh theo khối 16 pixel giống bản thật.
   - Bản cũ: ô 568 pixel bị cắt còn 560, ảnh ghép hụt 24 pixel.
-  - Bản đã sửa: ô 560 pixel trước và sau VAE, ảnh ghép đủ kích thước.
-  - Ở đúng cỡ 8 MP: ô 1472×832 trước và sau VAE, ảnh ra đủ 3861×2173.
+  - Bản đã sửa, ảnh ngang 1500×844: ô 544×304 giữ nguyên trước và sau VAE, ảnh ghép đủ kích thước.
+  - Bản đã sửa, ảnh dọc 1080×1350: ô 368×464 giữ nguyên, ảnh ghép đủ kích thước.
 - Bản FLUX.1 ban đầu: mở đủ 24 node, không thiếu node nào, chạy hết đường xử lý với model thay thế.
 - **Chưa** chạy trên TensorArt và chưa chạy với FLUX.1 thật. Tên file model trên TensorArt có thể khác, khi đó chọn lại theo bảng trên.

@@ -1,17 +1,18 @@
 # Workflow cho TensorArt – Bokin Photoreal Upscale (Flux)
 
-Hai workflow phóng to ảnh rồi vẽ lại chi tiết để ảnh **giống ảnh chụp thật**:
+Ba workflow phóng to ảnh rồi vẽ lại chi tiết bằng Flux:
 
 | File | Kích thước ra | Dùng khi |
 |---|---|---|
 | `Bokin_Flux_Photoreal_Upscale_TensorArt.json` | luôn khoảng **4K (8 MP)**, ảnh gốc to hay nhỏ đều vậy | Muốn chi phí ổn định, ảnh gốc to cỡ nào cũng được |
 | `Bokin_Flux_Photoreal_Upscale_4x_TensorArt.json` | **đúng gấp 4** chiều rộng và chiều cao ảnh gốc | Ảnh gốc nhỏ (đến khoảng 1600px), muốn phóng 4x như nút 4x của Shakker |
+| `Bokin_Flux_Scenery_4K_UHD_TensorArt.json` | **đúng 3840×2160** | Ảnh phong cảnh 16:9: làng quê, quán cà phê, hồ, đường, cây lá mùa thu. Xem [bản Scenery](#bản-scenery-4k-uhd-cho-ảnh-phong-cảnh-169) |
 
-Khác với app Bokin, hai workflow này chỉ dùng node TensorArt có sẵn: node chuẩn của ComfyUI và 3 node của **Comfyui_TTP_Toolset**. Vì vậy chúng import được lên TensorArt.
+Khác với app Bokin, các workflow này chỉ dùng node TensorArt có sẵn: node chuẩn của ComfyUI và 3 node của **Comfyui_TTP_Toolset**. Vì vậy chúng import được lên TensorArt.
 
 ## Cách dùng trên TensorArt
 
-1. Mở trình tạo workflow của TensorArt, kéo thả một trong hai file `.json` vào (hoặc dùng chức năng import).
+1. Mở trình tạo workflow của TensorArt, kéo thả một trong các file `.json` vào (hoặc dùng chức năng import).
 2. Nếu ô nào báo **không tìm thấy model**, bấm vào ô đó và chọn bản tương ứng trong danh sách của TensorArt:
 
    | Ô | Chọn |
@@ -49,6 +50,30 @@ Khác với app Bokin, hai workflow này chỉ dùng node TensorArt có sẵn: n
 | factor | 2 | 3 | 4 | 5 | 6 |
 
 Ví dụ ảnh 1080×1350 thì đặt `width_factor` 4 và `height_factor` 5. Ảnh 1024px phóng 4x ra 4096px (16 MP), tốn khoảng gấp đôi bản 4K. Ảnh gốc trên khoảng 1600px nên dùng bản 4K.
+
+## Bản Scenery 4K UHD: cho ảnh phong cảnh 16:9
+
+Làm riêng cho ảnh làng quê, quán cà phê, hồ nước, đường và cây lá mùa thu, khổ 16:9 (1500×844, 2000×1125...). Khác bản 4K thường ở các điểm sau:
+
+| Thiết lập | Bản 4K thường | Bản Scenery | Lý do |
+|---|---|---|---|
+| Kích thước ra | ~8 MP, theo tỉ lệ ảnh gốc | **đúng 3840×2160** | Đúng chuẩn 4K UHD của YouTube và TV, không lệch vài pixel |
+| Chuẩn hoá ảnh gốc | về ~1.5 MP | bỏ | Ảnh 2000px không bị thu nhỏ trước khi phóng, giữ được nhiều chi tiết hơn |
+| Prompt | tả da, tóc, vải, film grain | tả lá cây, vỏ cây, mái ngói, ván gỗ, cửa sổ, gạch đá, mặt đường, mặt nước | Đúng các chất liệu có trong ảnh. Bỏ film grain vì ảnh gốc sạch, không có hạt |
+| Mô tả ảnh trong prompt | nên thêm | **không thêm** tên vật thể | Prompt áp cho cả 9 ô. Ghi "café" hay "train" có thể làm mọc vật thể lạ ở ô bầu trời hoặc ô lá cây |
+| FluxGuidance | 2.2 | **3.0** | Giữ vẻ sạch, rực của ảnh gốc. Mức 2.2 kéo về chất ảnh chụp, bớt bóng bẩy |
+| Model vẽ lại | flux1-dev.sft hoặc Krea | **flux1-dev.sft** | Krea thiên về màu ảnh chụp tự nhiên, dễ làm ảnh bớt rực so với phong cách gốc |
+
+Chi phí gần bằng bản 4K thường, vì 3840×2160 cũng khoảng 8 MP và cũng chia 9 ô.
+
+Lưu ý riêng cho thể loại này:
+
+- **Sửa chữ trước khi phóng to.** Biển hiệu và bảng phấn trong ảnh AI hay bị sai chữ, ví dụ "IKEF TONR GACU CAPE". Ở denoise 0.30, Flux không viết lại chữ mà chỉ làm chữ sai nét hơn, lên 4K càng dễ thấy. Hãy sửa chữ ngay lúc tạo ảnh, hoặc sửa bằng Photoshop/Canva rồi mới upscale.
+- **Ảnh không phải 16:9** sẽ bị cắt bớt ở giữa cho vừa 3840×2160. Ảnh dọc hoặc vuông thì dùng bản 4K thường.
+- **Mùa khác:** chỉ đổi chữ đầu prompt `autumn` thành `winter`, `spring` hoặc `summer`.
+- **Chốt thông số chuẩn cho công ty:** lấy 3 ảnh tiêu biểu, chạy 4 lần mỗi ảnh với FluxGuidance 2.5 / 3.0 và denoise 0.25 / 0.35. Chọn bộ đẹp nhất rồi lưu lại vào workflow. Giữ seed cố định (42) để các ảnh ra đồng đều.
+- **Giao cho nhân viên dùng:** khi Publish thành AI Tool, chỉ mở TA Node cho Load Image. Khoá các thông số còn lại để ảnh nào cũng ra cùng một chuẩn.
+- **8K (7680×4320):** đổi kích thước ở node "Ra đúng 3840x2160", rồi đặt `width_factor` và `height_factor` = 6. Tốn khoảng 4 lần.
 
 ## Chỉnh nhanh
 

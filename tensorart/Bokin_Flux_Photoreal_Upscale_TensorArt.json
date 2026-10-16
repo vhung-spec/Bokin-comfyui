@@ -102,7 +102,7 @@
         "text": ""
       },
       "widgets_values": [
-        "BOKIN PHOTOREAL UPSCALE (Flux) - cho TensorArt\n\nPhóng to ảnh lên ~4K và vẽ lại chi tiết cho giống ảnh chụp thật.\n\nCÁCH DÙNG\n1. Load Image: chọn ảnh.\n2. Prompt: thêm 1 câu mô tả ảnh vào ĐẦU prompt, vd. \"portrait of an old fisherman, \" - kết quả sẽ thật hơn rõ rệt.\n3. Bấm Run.\n\nCHỈNH NHANH\n- Độ sáng tạo (BasicScheduler > denoise): 0.25 giữ sát ảnh gốc, 0.30 cân bằng (mặc định), 0.35 thêm nhiều chi tiết (dễ sinh chi tiết lạ).\n- Kích thước ra (Scale to 4K > megapixels): 8 = 4K, 4 = 2.7K, 16 = 5.6K (tốn credit gấp đôi).\n- Tiết kiệm credit: steps 20 -> 12.\n- Ảnh chân dung cận mặt: width/height_factor 3 -> 2 để không cắt ngang khuôn mặt.\n\nMODEL (bấm vào ô để chọn nếu TensorArt báo không tìm thấy)\n- FLUX.1 dev (Load Diffusion Model) + clip_l + t5xxl + ae.safetensors - phải cùng là FLUX.1.\n  KHÔNG dùng flux2_dev_* với bộ clip_l/t5xxl/ae (gây lỗi Model/system issue).\n- Upscale model: 4x_RealisticRescaler (ảnh chụp) hoặc 4x_NMKD-Siax / 4x-UltraSharp.\n- Có LoRA realism cho FLUX.1 trên TensorArt thì nối thêm LoraLoaderModelOnly sau Load Diffusion Model."
+        "BOKIN PHOTOREAL UPSCALE (Flux) - cho TensorArt\n\nPhóng to ảnh lên ~4K và vẽ lại chi tiết cho giống ảnh chụp thật.\n\nCÁCH DÙNG\n1. Load Image: chọn ảnh.\n2. Prompt: thêm 1 câu mô tả ảnh vào ĐẦU prompt, vd. \"portrait of an old fisherman, \" - kết quả sẽ thật hơn rõ rệt.\n3. Bấm Run.\n\nCHỈNH NHANH\n- Độ sáng tạo (BasicScheduler > denoise): 0.25 giữ sát ảnh gốc, 0.30 cân bằng (mặc định), 0.35 thêm nhiều chi tiết (dễ sinh chi tiết lạ).\n- Kích thước ra (Scale to 4K > megapixels): 8 = 4K, 4 = 2.7K, 16 = 5.6K (tốn credit gấp đôi).\n- Tiết kiệm credit: steps 20 -> 12.\n- Ảnh chân dung cận mặt: width/height_factor 3 -> 2 để không cắt ngang khuôn mặt.\n\nMODEL (bấm vào ô để chọn nếu TensorArt báo không tìm thấy)\n- Load Diffusion Model: flux1-dev.sft (hoặc flux1-dev-fp8.safetensors). Muốn thật hơn nữa: flux1-krea-dev.safetensors và tăng FluxGuidance lên 3.5.\n- clip_l + t5xxl_fp8_e4m3fn + ae.safetensors - phải cùng là FLUX.1. KHÔNG dùng flux2_dev_* (gây lỗi Model/system issue).\n- Upscale model: 4x_RealisticRescaler (ảnh chụp) hoặc 4x_NMKD-Siax / 4x-UltraSharp.\n- Có LoRA realism cho FLUX.1 trên TensorArt thì nối thêm LoraLoaderModelOnly sau Load Diffusion Model."
       ],
       "color": "#432",
       "bgcolor": "#653"
@@ -416,7 +416,7 @@
       },
       "title": "Load Diffusion Model (FLUX.1 dev)",
       "widgets_values": [
-        "flux1-dev.safetensors",
+        "flux1-dev.sft",
         "fp8_e4m3fn"
       ]
     },

@@ -127,7 +127,7 @@ Cách dùng: chọn ảnh ở **Load Image**, chỉnh `upscale_by` và `mode` r�
 
 ## Workflow cho TensorArt
 
-TensorArt không cho cài node riêng, nên không chạy được bộ node Bokin. Thư mục [`tensorart/`](tensorart) có sẵn workflow Flux phóng to kiểu ảnh chụp, chỉ dùng các node TensorArt có (node chuẩn của ComfyUI và Comfyui_TTP_Toolset), kèm hướng dẫn chọn model và chỉnh thông số.
+TensorArt không cho cài node riêng, nên không chạy được bộ node Bokin. Thư mục [`tensorart/`](tensorart) có sẵn 2 workflow Flux phóng to kiểu ảnh chụp (ra ~4K, hoặc đúng 4x), chỉ dùng các node TensorArt có (node chuẩn của ComfyUI và Comfyui_TTP_Toolset), kèm hướng dẫn chọn model và chỉnh thông số.
 
 ## Các node
 

@@ -131,7 +131,12 @@
     color: #ffb4b4; }
   [hidden] { display: none !important; }
 
+  .brand, .top a { white-space: nowrap; }
+
   @media (max-width: 900px) {
+    .top { flex-wrap: wrap; row-gap: 4px; padding: 10px 16px; }
+    .device { order: 3; flex-basis: 100%; margin-left: 0; }
+    .top a { margin-left: auto; }
     .layout { grid-template-columns: 1fr; }
     .panel { position: static; max-height: none; border-right: 0; border-bottom: 1px solid var(--border); }
     #status { min-width: 0; }

@@ -173,6 +173,6 @@ Bảng chưa tính phần cố định của mỗi lần chạy: tải model, ph
   - Bản cũ: ô 568 pixel bị cắt còn 560, ảnh ghép hụt 24 pixel.
   - Bản hiện tại (ô cố định 1472×832), đúng 8 MP với ảnh 1920×1080: ô 1472×832 giữ nguyên trước và sau VAE, ảnh ra 3862×2172, đúng tỉ lệ 16:9 của ảnh gốc, không hụt pixel nào.
   - Bản trung gian (`resolution_steps` 44): ô không bị cắt, nhưng ảnh ra 3872×2156, méo tỉ lệ khoảng 1%.
-- Bản Klein có Image Color Match: mở đủ 25 node, không thiếu node nào, chạy hết đường xử lý với model thay thế.
+- Bản Klein hiện tại (24 node, có Image Color Match): bài kiểm tra 8 MP ở trên chạy qua mọi node trừ bước phóng 4x và bước vẽ lại, gồm cả Image Color Match. Bản trước đó (25 node) chạy hết đường xử lý với model thay thế.
 - Bản FLUX.1 ban đầu: mở đủ 24 node, không thiếu node nào, chạy hết đường xử lý với model thay thế.
 - **Chưa** chạy trên TensorArt và chưa chạy với FLUX.1 thật. Tên file model trên TensorArt có thể khác, khi đó chọn lại theo bảng trên.

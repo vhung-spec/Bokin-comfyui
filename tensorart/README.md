@@ -88,8 +88,8 @@ Hai file `Bokin_Flux2_*` giữ nguyên từng node của workflow "4k-upscale" t
 | Text encoder | **Load CLIP (Dual)**: `clip_l` + `qwen2.5vl-7b`, type `flux` | **Load CLIP** (1 ô): `mistral_3_small_flux2_fp8`, type **`flux2`** | FLUX.2 dev đọc prompt bằng Mistral Small 3.1, không dùng clip_l, t5xxl hay Qwen2.5-VL |
 | VAE | `ae.safetensors` | **`flux2-vae.safetensors`** | `ae` là VAE của FLUX.1. FLUX.2 dùng VAE mới, lưu gấp đôi dữ liệu cho mỗi ô 16×16 pixel |
 | denoise | 0.25 | **0.12** | Xem giải thích bên dưới |
-| Kích thước ô | resolution_steps 1, overlap_rate 0.20 | **resolution_steps 44, overlap_rate 0.125** (vẫn 3×3 ô) | Giữ mỗi ô chia hết cho 16. Xem giải thích bên dưới |
-| Sửa màu | không có | thêm **Image Color Match** (Easy-Use, method `wavelet`) trước Save Image | Giữ màu và độ sáng của ảnh gốc. Xem giải thích bên dưới |
+| Kích thước ô | TTP_Tile_image_size 3×3, overlap 0.20 | bỏ TTP_Tile_image_size, đặt thẳng ô **1472×832** trong TTP_Image_Tile_Batch | Giữ mỗi ô chia hết cho 16 mà không làm méo tỉ lệ ảnh. Xem giải thích bên dưới |
+| Sửa màu | không có | thêm **Image Color Match** (Easy-Use, method `wavelet`) trước Save Image, lấy màu theo **ảnh gốc** | Giữ màu và độ sáng của ảnh gốc. Xem giải thích bên dưới |
 
 **Vì sao denoise phải hạ xuống 0.12.** FLUX.2 đặt lịch khử nhiễu lệch về phía nhiễu cao hơn FLUX.1 (shift 2.02 so với 1.15). Với sgm_uniform 10 bước:
 
@@ -104,13 +104,15 @@ Mức nhiễu này được tính bằng chính mã ComfyUI. Chỉnh thêm: 0.10
 - Với ảnh 16:9 ở 8 MP, mỗi ô rộng 1480 pixel. Con số này không chia hết cho 16.
 - VAE cắt mỗi ô còn 1472 pixel. TTP_Image_Assy vẫn ghép theo vị trí tính cho 1480, nên các ô lệch nhau vài pixel. Phần trộn mép 256 pixel chồng hai hình lệch lên nhau, tạo vệt mờ và bóng ma ở mọi đường nối. Ảnh ra cũng hụt bề ngang.
 - Bản đầu tiên của hai file FLUX.2 bị đúng lỗi này.
-- Bản hiện tại không thêm node nào, chỉ đổi 2 thông số: `resolution_steps` của Scale Image to Total Pixels thành **44**, và `overlap_rate` của TTP_Tile_image_size thành **0.125**. Với 3×3 ô, mỗi ô khi đó rộng đúng bằng cạnh ảnh ÷ 2.75. Cạnh ảnh là bội số của 44 nên ô luôn chia hết cho 16, với mọi tỉ lệ ảnh. Ví dụ ảnh 3872×2156 cho ô 1408×784.
-- Phần chồng mép giảm từ 20% xuống 12.5%, nên tổng diện tích phải vẽ lại cũng giảm, tốn ít credit hơn một chút.
-- **Giữ `width_factor` và `height_factor` = 3.** Đổi số ô thì cách tính trên không còn đúng.
+- Bản hiện tại đặt thẳng kích thước ô **1472×832** (chia hết cho 16) trong TTP_Image_Tile_Batch. TTP_Image_Tile_Batch tự tính số ô và phần chồng mép, nên ảnh ở bất kỳ kích thước hay tỉ lệ nào cũng chia đúng.
+  - Ảnh 16:9 ở 8 MP (3862×2172) chia đúng 3×3 ô, mép chồng nhau 277 pixel theo chiều ngang và 162 pixel theo chiều dọc.
+  - Ảnh tỉ lệ khác vẫn chạy đúng, chỉ số ô thay đổi. Có điều, ở vài tỉ lệ phần chồng mép rất mỏng: 3:2 chỉ còn 65 pixel theo chiều dọc, 1:1 còn 48 pixel theo chiều ngang, 4:5 còn 30 pixel theo chiều dọc. Mép càng mỏng càng dễ lộ đường nối. Bản FLUX.2 được chỉnh cho ảnh 16:9. Ảnh tỉ lệ khác thì dùng bản FLUX.1, hoặc đổi kích thước ô cho hợp.
+- Scale Image to Total Pixels giữ `resolution_steps` = 1, nên ảnh ra **đúng tỉ lệ ảnh gốc**.
+- Có một bản sửa trung gian đặt `resolution_steps` = 44. Tham số này làm tròn chiều rộng và chiều cao riêng rẽ, khiến ảnh 16:9 bị kéo thành 3872×2156, lệch tỉ lệ khoảng 1%. Bản hiện tại đã bỏ cách này.
 
 **Vì sao thêm Image Color Match.** Klein là model nhỏ, chạy 4 bước. Khi vẽ lại từ mức nhiễu khoảng 50%, nó không giữ đúng tông màu gốc mà kéo về "gu" riêng, thường là tối hơn. Cả 9 ô do cùng một model vẽ nên toàn ảnh tối đi đều. Node `easy imageColorMatch` (method `wavelet`) xử lý việc này:
 
-- Lấy màu và độ sáng (các chi tiết lớn) từ ảnh ngay trước bước vẽ lại.
+- Lấy màu và độ sáng (các chi tiết lớn) từ **ảnh gốc** đưa vào (sau Image Scale Down To Size), không phải ảnh do model 4x phóng to. Model 4x cũng có thể làm đổi tông màu một chút, nên lấy màu thẳng từ ảnh gốc là chắc nhất.
 - Giữ chi tiết nhỏ mà model vừa vẽ thêm.
 
 Đây là cùng cách sửa màu app Bokin đang dùng. Thử trên ảnh 1500×844 của công ty, làm tối 15% và thêm chi tiết giả lập:
@@ -122,6 +124,8 @@ Mức nhiễu này được tính bằng chính mã ComfyUI. Chỉnh thêm: 0.10
 | Sau Image Color Match | 62.7 | 22.1 |
 
 Node này có cả ở bản dev. Muốn bỏ thì nối thẳng TTP_Image_Assy vào Save Image.
+
+Node chỉ chỉnh lại độ sáng ở các mảng lớn. Nếu klein làm tối các chi tiết nhỏ (khe lá, bóng gạch), phần đó được giữ lại như chi tiết mới, nên ảnh vẫn có thể trông hơi tối hơn. Khi đó hạ **denoise xuống 0.10** để klein vẽ lại nhẹ tay hơn.
 
 **Bản klein 4B** dùng cùng workflow, chỉ đổi:
 
@@ -169,7 +173,7 @@ Bảng chưa tính phần cố định của mỗi lần chạy: tải model, ph
   - Bản cũ: ô 568 pixel bị cắt còn 560, ảnh ghép hụt 24 pixel.
   - Bản đã sửa, ảnh ngang 1500×844: ô 544×304 giữ nguyên trước và sau VAE, ảnh ghép đủ kích thước.
   - Bản đã sửa, ảnh dọc 1080×1350: ô 368×464 giữ nguyên, ảnh ghép đủ kích thước.
-  - Bản đã sửa, đúng 8 MP với ảnh 1920×1080: ô 1408×784 giữ nguyên, ảnh ra đủ 3872×2156.
+  - Bản trung gian (`resolution_steps` 44), đúng 8 MP với ảnh 1920×1080: ô 1408×784 giữ nguyên, nhưng ảnh ra 3872×2156, méo tỉ lệ khoảng 1%.
 - Bản Klein có Image Color Match: mở đủ 25 node, không thiếu node nào, chạy hết đường xử lý với model thay thế.
 - Bản FLUX.1 ban đầu: mở đủ 24 node, không thiếu node nào, chạy hết đường xử lý với model thay thế.
 - **Chưa** chạy trên TensorArt và chưa chạy với FLUX.1 thật. Tên file model trên TensorArt có thể khác, khi đó chọn lại theo bảng trên.

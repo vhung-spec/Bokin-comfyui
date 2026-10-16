@@ -149,4 +149,6 @@ Bảng chưa tính phần cố định của mỗi lần chạy: tải model, ph
 - Bản FLUX.2: chạy phần chia ô, mã hoá, giải mã và ghép với một VAE đúng kiến trúc FLUX.2. VAE này dùng trọng số ngẫu nhiên, nhưng cắt ảnh theo khối 16 pixel giống bản thật.
   - Bản cũ: ô 568 pixel bị cắt còn 560, ảnh ghép hụt 24 pixel.
   - Bản đã sửa: ô 560 pixel trước và sau VAE, ảnh ghép đủ kích thước.
+  - Ở đúng cỡ 8 MP: ô 1472×832 trước và sau VAE, ảnh ra đủ 3861×2173.
+- Bản FLUX.1 ban đầu: mở đủ 24 node, không thiếu node nào, chạy hết đường xử lý với model thay thế.
 - **Chưa** chạy trên TensorArt và chưa chạy với FLUX.1 thật. Tên file model trên TensorArt có thể khác, khi đó chọn lại theo bảng trên.

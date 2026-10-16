@@ -85,8 +85,9 @@ Lưu ý riêng cho thể loại này:
 
 ## Đã kiểm tra
 
-- Mở trong ComfyUI v0.40.0 có cài Comfyui_TTP_Toolset: bản 4K có 25 node, bản 4x có 23 node, không thiếu node nào, đều xuất ra prompt hợp lệ.
+- Mở trong ComfyUI v0.40.0 có cài Comfyui_TTP_Toolset: bản 4K có 25 node, bản 4x có 23 node, bản Scenery có 24 node. Không thiếu node nào, cả ba đều xuất ra prompt hợp lệ.
 - Chạy thử toàn bộ đường xử lý, thay model FLUX.1 bằng model SD1.5 trọng số ngẫu nhiên vì máy test không có FLUX.1:
   - Bản 4K: chia 9 ô, ảnh ra đúng kích thước.
   - Bản 4x: ảnh 256×256 cho ra đúng 1024×1024, 16 ô được vẽ lại lần lượt rồi ghép.
+  - Bản Scenery: ảnh phong cảnh 1500×844 của công ty cho ra đúng 3840×2160, 9 ô được vẽ lại lần lượt rồi ghép.
 - **Chưa** chạy trên TensorArt và chưa chạy với FLUX.1 thật. Tên file model trên TensorArt có thể khác, khi đó chọn lại theo bảng trên.

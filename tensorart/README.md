@@ -1,14 +1,16 @@
 # Workflow cho TensorArt – Bokin Photoreal Upscale (Flux)
 
-Ba workflow phóng to ảnh rồi vẽ lại chi tiết bằng Flux:
+Các workflow phóng to ảnh rồi vẽ lại chi tiết bằng Flux:
 
 | File | Kích thước ra | Dùng khi |
 |---|---|---|
 | `Bokin_Flux_Photoreal_Upscale_TensorArt.json` | luôn khoảng **4K (8 MP)**, ảnh gốc to hay nhỏ đều vậy | Muốn chi phí ổn định, ảnh gốc to cỡ nào cũng được |
 | `Bokin_Flux_Photoreal_Upscale_4x_TensorArt.json` | **đúng gấp 4** chiều rộng và chiều cao ảnh gốc | Ảnh gốc nhỏ (đến khoảng 1600px), muốn phóng 4x như nút 4x của Shakker |
+| `Bokin_Flux2_Dev_4K_Upscale_TensorArt.json` | khoảng **4K (8 MP)** | Giống hệt workflow "4k-upscale" trên TensorArt, đổi đúng sang **FLUX.2 dev**. Xem [bản FLUX.2](#bản-flux2-giống-workflow-4k-upscale) |
+| `Bokin_Flux2_Klein_4K_Upscale_TensorArt.json` | khoảng **4K (8 MP)** | Như trên nhưng dùng **FLUX.2 klein 4B**, tốn ít credit nhất |
 | `Bokin_Flux_Scenery_4K_UHD_TensorArt.json` | **đúng 3840×2160** | Ảnh phong cảnh 16:9: làng quê, quán cà phê, hồ, đường, cây lá mùa thu. Xem [bản Scenery](#bản-scenery-4k-uhd-cho-ảnh-phong-cảnh-169) |
 
-Khác với app Bokin, các workflow này chỉ dùng node TensorArt có sẵn: node chuẩn của ComfyUI và 3 node của **Comfyui_TTP_Toolset**. Vì vậy chúng import được lên TensorArt.
+Khác với app Bokin, các workflow này chỉ dùng node TensorArt có sẵn: node chuẩn của ComfyUI, **Comfyui_TTP_Toolset** và (bản FLUX.2) **ComfyUI-Easy-Use**. Vì vậy chúng import được lên TensorArt.
 
 ## Cách dùng trên TensorArt
 
@@ -74,6 +76,52 @@ Lưu ý riêng cho thể loại này:
 - **Chốt thông số chuẩn cho công ty:** lấy 3 ảnh tiêu biểu, chạy 4 lần mỗi ảnh với FluxGuidance 2.5 / 3.0 và denoise 0.25 / 0.35. Chọn bộ đẹp nhất rồi lưu lại vào workflow. Giữ seed cố định (42) để các ảnh ra đồng đều.
 - **Giao cho nhân viên dùng:** khi Publish thành AI Tool, chỉ mở TA Node cho Load Image. Khoá các thông số còn lại để ảnh nào cũng ra cùng một chuẩn.
 - **8K (7680×4320):** đổi kích thước ở node "Ra đúng 3840x2160", rồi đặt `width_factor` và `height_factor` = 6. Tốn khoảng 4 lần.
+
+## Bản FLUX.2 (giống workflow 4k-upscale)
+
+Hai file `Bokin_Flux2_*` giữ nguyên từng node của workflow "4k-upscale" trên TensorArt: Image Scale Down To Size 1080, model 4x_RealisticRescaler, Scale Image to Total Pixels 8 MP, chia 3×3 ô với overlap 0.20, dpmpp_2m / sgm_uniform 10 bước, VAE Decode (Tiled), ghép ô với padding 256. Chỉ sửa những chỗ FLUX.2 bắt buộc phải khác:
+
+| Ô | Workflow cũ | Đúng cho FLUX.2 | Vì sao |
+|---|---|---|---|
+| Load Diffusion Model | `flux2_dev_fp8mixed`, weight_dtype `fp8_e4m3fn` | `flux2_dev_fp8mixed`, weight_dtype **`default`** | File đã là fp8 "mixed": một số lớp được giữ độ chính xác cao. Ép `fp8_e4m3fn` làm mất phần đó |
+| Text encoder | **Load CLIP (Dual)**: `clip_l` + `qwen2.5vl-7b`, type `flux` | **Load CLIP** (1 ô): `mistral_3_small_flux2_fp8`, type **`flux2`** | FLUX.2 dev đọc prompt bằng Mistral Small 3.1, không dùng clip_l, t5xxl hay Qwen2.5-VL |
+| VAE | `ae.safetensors` | **`flux2-vae.safetensors`** | `ae` là VAE của FLUX.1. FLUX.2 dùng VAE mới, lưu gấp đôi dữ liệu cho mỗi ô 16×16 pixel |
+| denoise | 0.25 | **0.12** | Xem giải thích bên dưới |
+
+**Vì sao denoise phải hạ xuống 0.12.** FLUX.2 đặt lịch khử nhiễu lệch về phía nhiễu cao hơn FLUX.1 (shift 2.02 so với 1.15). Với sgm_uniform 10 bước:
+
+- FLUX.1 ở denoise 0.25 bắt đầu vẽ lại từ mức nhiễu **0.51**.
+- FLUX.2 cũng ở 0.25 bắt đầu từ **0.72**, tức vẽ lại mạnh hơn nhiều, dễ sinh chi tiết lạ.
+- FLUX.2 phải hạ xuống **0.12** mới về đúng mức 0.51.
+
+Mức nhiễu này được tính bằng chính mã ComfyUI. Chỉnh thêm: 0.10 giữ sát ảnh gốc, 0.15 thêm nhiều chi tiết.
+
+**Bản klein 4B** dùng cùng workflow, chỉ đổi:
+
+| Ô | Chọn |
+|---|---|
+| Load Diffusion Model | `flux-2-klein-4b-fp8` (không chọn bản có chữ `base`, vì bản base cần 20+ bước) |
+| Load CLIP | `qwen_3_4b`, type `flux2` |
+| Load VAE | `flux2-vae.safetensors` (dùng chung VAE với bản dev) |
+| Sampler / steps | `euler`, **4 bước**. Klein được chưng cất để chạy 4 bước. FluxGuidance không có tác dụng với klein |
+
+Muốn chất lượng ở giữa hai bản trên: chọn `flux-2-klein-9b-fp8` với text encoder `qwen_3_8b_fp8mixed`.
+
+**Credit.** Bảng dưới so sánh khối lượng tính toán của phần vẽ lại các ô, ước tính bằng số tham số của model × số token mỗi ô × số bước:
+
+| Cấu hình | So với bản FLUX.2 dev mặc định |
+|---|---|
+| FLUX.2 dev, 10 bước, overlap 0.20 (mặc định) | 100% |
+| FLUX.2 dev, 8 bước, overlap 0.10 | ~70% |
+| FLUX.1 dev, 10 bước (để so sánh) | ~40% |
+| FLUX.2 klein 9B, 4 bước | ~12% |
+| FLUX.2 klein 4B, 4 bước | ~5% |
+
+Bảng chưa tính phần cố định của mỗi lần chạy: tải model, phóng 4x, mã hoá và giải mã ảnh. Với klein, phần cố định chiếm tỉ lệ lớn, nên tổng credit thực tế giảm ít hơn con số trong bảng. Cách TensorArt quy đổi ra credit chưa được kiểm chứng. Hãy chạy mỗi bản một lần với cùng một ảnh rồi xem credit đã trừ.
+
+**Giấy phép.** FLUX.2 klein 4B dùng giấy phép Apache 2.0, được dùng thương mại. FLUX.2 dev và klein 9B dùng giấy phép FLUX Non-Commercial, cần kiểm tra trước khi dùng cho công việc của công ty.
+
+**Tên file trên TensorArt.** Tên model chính (`flux2_dev_fp8mixed`, `flux-2-klein-4b-fp8`, `flux-2-klein-9b-fp8`) lấy từ danh sách TensorArt. Tên text encoder và VAE lấy theo workflow mẫu của ComfyUI, nên có thể khác trên TensorArt. Nếu báo không tìm thấy, chọn file có chứa `mistral_3_small_flux2`, `qwen_3_4b` hoặc `flux2-vae`.
 
 ## Chỉnh nhanh
 

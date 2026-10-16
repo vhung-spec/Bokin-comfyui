@@ -6,6 +6,7 @@ Các workflow phóng to ảnh rồi vẽ lại chi tiết bằng Flux:
 |---|---|---|
 | `Bokin_Flux_Photoreal_Upscale_TensorArt.json` | luôn khoảng **4K (8 MP)**, ảnh gốc to hay nhỏ đều vậy | Muốn chi phí ổn định, ảnh gốc to cỡ nào cũng được |
 | `Bokin_Flux_Photoreal_Upscale_4x_TensorArt.json` | **đúng gấp 4** chiều rộng và chiều cao ảnh gốc | Ảnh gốc nhỏ (đến khoảng 1600px), muốn phóng 4x như nút 4x của Shakker |
+| `Bokin_Flux1_4K_Upscale_TensorArt.json` | khoảng **4K (8 MP)** | Workflow "4k-upscale" ban đầu với bộ **FLUX.1 dev** khớp nhau (flux1-dev-fp8, clip_l + t5xxl, ae) |
 | `Bokin_Flux2_Dev_4K_Upscale_TensorArt.json` | khoảng **4K (8 MP)** | Giống hệt workflow "4k-upscale" trên TensorArt, đổi đúng sang **FLUX.2 dev**. Xem [bản FLUX.2](#bản-flux2-giống-workflow-4k-upscale) |
 | `Bokin_Flux2_Klein_4K_Upscale_TensorArt.json` | khoảng **4K (8 MP)** | Như trên nhưng dùng **FLUX.2 klein 4B**, tốn ít credit nhất |
 | `Bokin_Flux_Scenery_4K_UHD_TensorArt.json` | **đúng 3840×2160** | Ảnh phong cảnh 16:9: làng quê, quán cà phê, hồ, đường, cây lá mùa thu. Xem [bản Scenery](#bản-scenery-4k-uhd-cho-ảnh-phong-cảnh-169) |
@@ -87,6 +88,7 @@ Hai file `Bokin_Flux2_*` giữ nguyên từng node của workflow "4k-upscale" t
 | Text encoder | **Load CLIP (Dual)**: `clip_l` + `qwen2.5vl-7b`, type `flux` | **Load CLIP** (1 ô): `mistral_3_small_flux2_fp8`, type **`flux2`** | FLUX.2 dev đọc prompt bằng Mistral Small 3.1, không dùng clip_l, t5xxl hay Qwen2.5-VL |
 | VAE | `ae.safetensors` | **`flux2-vae.safetensors`** | `ae` là VAE của FLUX.1. FLUX.2 dùng VAE mới, lưu gấp đôi dữ liệu cho mỗi ô 16×16 pixel |
 | denoise | 0.25 | **0.12** | Xem giải thích bên dưới |
+| Kích thước ô | lấy thẳng từ TTP_Tile_image_size | thêm **4 node "Làm tròn ô"** (easy mathInt) đưa về bội số của 16 | Xem giải thích bên dưới |
 
 **Vì sao denoise phải hạ xuống 0.12.** FLUX.2 đặt lịch khử nhiễu lệch về phía nhiễu cao hơn FLUX.1 (shift 2.02 so với 1.15). Với sgm_uniform 10 bước:
 
@@ -95,6 +97,12 @@ Hai file `Bokin_Flux2_*` giữ nguyên từng node của workflow "4k-upscale" t
 - FLUX.2 phải hạ xuống **0.12** mới về đúng mức 0.51.
 
 Mức nhiễu này được tính bằng chính mã ComfyUI. Chỉnh thêm: 0.10 giữ sát ảnh gốc, 0.15 thêm nhiều chi tiết.
+
+**Vì sao phải làm tròn ô về bội số của 16.** VAE của FLUX.2 xử lý ảnh theo khối 16 pixel (VAE của FLUX.1 là 8 pixel). TTP_Tile_image_size chỉ làm tròn kích thước ô về bội số của 8.
+
+- Với ảnh 16:9 ở 8 MP, mỗi ô rộng 1480 pixel. Con số này không chia hết cho 16.
+- VAE cắt mỗi ô còn 1472 pixel. TTP_Image_Assy vẫn ghép theo vị trí tính cho 1480, nên các ô lệch nhau vài pixel. Phần trộn mép 256 pixel chồng hai hình lệch lên nhau, tạo vệt mờ và bóng ma ở mọi đường nối. Ảnh ra cũng hụt bề ngang.
+- Bản đầu tiên của hai file FLUX.2 bị đúng lỗi này. Bản hiện tại thêm 4 node `easy mathInt` (chia 16 rồi nhân 16) giữa TTP_Tile_image_size và TTP_Image_Tile_Batch. **Đừng xoá 4 node này.**
 
 **Bản klein 4B** dùng cùng workflow, chỉ đổi:
 
@@ -138,4 +146,7 @@ Bảng chưa tính phần cố định của mỗi lần chạy: tải model, ph
   - Bản 4K: chia 9 ô, ảnh ra đúng kích thước.
   - Bản 4x: ảnh 256×256 cho ra đúng 1024×1024, 16 ô được vẽ lại lần lượt rồi ghép.
   - Bản Scenery: ảnh phong cảnh 1500×844 của công ty cho ra đúng 3840×2160, 9 ô được vẽ lại lần lượt rồi ghép.
+- Bản FLUX.2: chạy phần chia ô, mã hoá, giải mã và ghép với một VAE đúng kiến trúc FLUX.2. VAE này dùng trọng số ngẫu nhiên, nhưng cắt ảnh theo khối 16 pixel giống bản thật.
+  - Bản cũ: ô 568 pixel bị cắt còn 560, ảnh ghép hụt 24 pixel.
+  - Bản đã sửa: ô 560 pixel trước và sau VAE, ảnh ghép đủ kích thước.
 - **Chưa** chạy trên TensorArt và chưa chạy với FLUX.1 thật. Tên file model trên TensorArt có thể khác, khi đó chọn lại theo bảng trên.

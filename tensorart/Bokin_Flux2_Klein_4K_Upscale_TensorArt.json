@@ -1,6 +1,6 @@
 {
-  "last_node_id": 24,
-  "last_link_id": 29,
+  "last_node_id": 28,
+  "last_link_id": 33,
   "nodes": [
     {
       "id": 1,
@@ -101,7 +101,7 @@
         "text": ""
       },
       "widgets_values": [
-        "BOKIN 4K UPSCALE - FLUX.2 klein 4B (TensorArt, tiết kiệm credit)\n\nCùng workflow với bản FLUX.2 dev, chỉ đổi model:\n- Load Diffusion Model: flux-2-klein-4b-fp8 (KHÔNG chọn bản có chữ \"base\": bản base cần 20+ steps).\n- Load CLIP: qwen_3_4b, type = flux2.\n- Load VAE: flux2-vae.safetensors (giống bản dev).\n- steps 4, sampler euler: klein được chưng cất để chạy 4 bước. FluxGuidance không có tác dụng với klein.\n- denoise 0.12 (tương đương 0.25 trên FLUX.1).\n\nKlein 4B dùng giấy phép Apache 2.0, được dùng thương mại.\nMuốn đẹp hơn mà vẫn rẻ: flux-2-klein-9b-fp8 + qwen_3_8b_fp8mixed (giấy phép phi thương mại)."
+        "BOKIN 4K UPSCALE - FLUX.2 klein 4B (TensorArt, tiết kiệm credit)\n\nCùng workflow với bản FLUX.2 dev, chỉ đổi model:\n- Load Diffusion Model: flux-2-klein-4b-fp8 (KHÔNG chọn bản có chữ \"base\": bản base cần 20+ steps).\n- Load CLIP: qwen_3_4b, type = flux2.\n- Load VAE: flux2-vae.safetensors (giống bản dev).\n- steps 4, sampler euler: klein được chưng cất để chạy 4 bước. FluxGuidance không có tác dụng với klein.\n- denoise 0.12 (tương đương 0.25 trên FLUX.1).\n- 4 node \"Làm tròn ô\": giữ kích thước ô chia hết cho 16 (VAE của FLUX.2 cần). Đừng xoá.\n\nKlein 4B dùng giấy phép Apache 2.0, được dùng thương mại.\nMuốn đẹp hơn mà vẫn rẻ: flux-2-klein-9b-fp8 + qwen_3_8b_fp8mixed (giấy phép phi thương mại)."
       ],
       "color": "#432",
       "bgcolor": "#653"
@@ -126,8 +126,8 @@
           "name": "MODEL",
           "type": "MODEL",
           "links": [
-            14,
-            16
+            18,
+            20
           ],
           "slot_index": 0
         }
@@ -160,7 +160,7 @@
           "name": "CLIP",
           "type": "CLIP",
           "links": [
-            12
+            16
           ],
           "slot_index": 0
         }
@@ -179,7 +179,7 @@
       "type": "VAELoader",
       "pos": [
         480,
-        400
+        430
       ],
       "size": [
         380,
@@ -194,8 +194,8 @@
           "name": "VAE",
           "type": "VAE",
           "links": [
-            11,
-            23
+            15,
+            27
           ],
           "slot_index": 0
         }
@@ -227,7 +227,7 @@
           "name": "NOISE",
           "type": "NOISE",
           "links": [
-            17
+            21
           ],
           "slot_index": 0
         }
@@ -258,7 +258,7 @@
         {
           "name": "clip",
           "type": "CLIP",
-          "link": 12
+          "link": 16
         }
       ],
       "outputs": [
@@ -266,7 +266,7 @@
           "name": "CONDITIONING",
           "type": "CONDITIONING",
           "links": [
-            13
+            17
           ],
           "slot_index": 0
         }
@@ -296,7 +296,7 @@
         {
           "name": "conditioning",
           "type": "CONDITIONING",
-          "link": 13
+          "link": 17
         }
       ],
       "outputs": [
@@ -304,7 +304,7 @@
           "name": "CONDITIONING",
           "type": "CONDITIONING",
           "links": [
-            15
+            19
           ],
           "slot_index": 0
         }
@@ -334,12 +334,12 @@
         {
           "name": "model",
           "type": "MODEL",
-          "link": 14
+          "link": 18
         },
         {
           "name": "conditioning",
           "type": "CONDITIONING",
-          "link": 15
+          "link": 19
         }
       ],
       "outputs": [
@@ -347,7 +347,7 @@
           "name": "GUIDER",
           "type": "GUIDER",
           "links": [
-            18
+            22
           ],
           "slot_index": 0
         }
@@ -377,7 +377,7 @@
           "name": "SAMPLER",
           "type": "SAMPLER",
           "links": [
-            19
+            23
           ],
           "slot_index": 0
         }
@@ -407,7 +407,7 @@
         {
           "name": "model",
           "type": "MODEL",
-          "link": 16
+          "link": 20
         }
       ],
       "outputs": [
@@ -415,7 +415,7 @@
           "name": "SIGMAS",
           "type": "SIGMAS",
           "links": [
-            20
+            24
           ],
           "slot_index": 0
         }
@@ -447,12 +447,12 @@
         {
           "name": "pixels",
           "type": "IMAGE",
-          "link": 10
+          "link": 14
         },
         {
           "name": "vae",
           "type": "VAE",
-          "link": 11
+          "link": 15
         }
       ],
       "outputs": [
@@ -460,7 +460,7 @@
           "name": "LATENT",
           "type": "LATENT",
           "links": [
-            21
+            25
           ],
           "slot_index": 0
         }
@@ -488,27 +488,27 @@
         {
           "name": "noise",
           "type": "NOISE",
-          "link": 17
+          "link": 21
         },
         {
           "name": "guider",
           "type": "GUIDER",
-          "link": 18
+          "link": 22
         },
         {
           "name": "sampler",
           "type": "SAMPLER",
-          "link": 19
+          "link": 23
         },
         {
           "name": "sigmas",
           "type": "SIGMAS",
-          "link": 20
+          "link": 24
         },
         {
           "name": "latent_image",
           "type": "LATENT",
-          "link": 21
+          "link": 25
         }
       ],
       "outputs": [
@@ -516,7 +516,7 @@
           "name": "output",
           "type": "LATENT",
           "links": [
-            22
+            26
           ],
           "slot_index": 0
         },
@@ -550,12 +550,12 @@
         {
           "name": "samples",
           "type": "LATENT",
-          "link": 22
+          "link": 26
         },
         {
           "name": "vae",
           "type": "VAE",
-          "link": 23
+          "link": 27
         }
       ],
       "outputs": [
@@ -563,7 +563,7 @@
           "name": "IMAGE",
           "type": "IMAGE",
           "links": [
-            24
+            28
           ],
           "slot_index": 0
         }
@@ -726,7 +726,7 @@
           "name": "tile_height",
           "type": "INT",
           "links": [
-            8
+            10
           ],
           "slot_index": 1
         }
@@ -766,7 +766,7 @@
           "widget": {
             "name": "tile_width"
           },
-          "link": 7
+          "link": 9
         },
         {
           "name": "tile_height",
@@ -774,7 +774,7 @@
           "widget": {
             "name": "tile_height"
           },
-          "link": 8
+          "link": 12
         }
       ],
       "outputs": [
@@ -782,7 +782,7 @@
           "name": "IMAGES",
           "type": "IMAGE",
           "links": [
-            9
+            13
           ],
           "slot_index": 0
         },
@@ -790,7 +790,7 @@
           "name": "POSITIONS",
           "type": "LIST",
           "links": [
-            26
+            30
           ],
           "slot_index": 1
         },
@@ -798,7 +798,7 @@
           "name": "ORIGINAL_SIZE",
           "type": "TUPLE",
           "links": [
-            27
+            31
           ],
           "slot_index": 2
         },
@@ -806,7 +806,7 @@
           "name": "GRID_SIZE",
           "type": "TUPLE",
           "links": [
-            28
+            32
           ],
           "slot_index": 3
         }
@@ -837,7 +837,7 @@
         {
           "name": "image",
           "type": "IMAGE",
-          "link": 9
+          "link": 13
         }
       ],
       "outputs": [
@@ -845,7 +845,7 @@
           "name": "IMAGE",
           "type": "IMAGE",
           "links": [
-            10
+            14
           ],
           "slot_index": 0
         }
@@ -873,7 +873,7 @@
         {
           "name": "images",
           "type": "IMAGE",
-          "link": 24
+          "link": 28
         }
       ],
       "outputs": [
@@ -881,7 +881,7 @@
           "name": "IMAGE",
           "type": "IMAGE",
           "links": [
-            25
+            29
           ],
           "slot_index": 0
         }
@@ -909,22 +909,22 @@
         {
           "name": "tiles",
           "type": "IMAGE",
-          "link": 25
+          "link": 29
         },
         {
           "name": "positions",
           "type": "LIST",
-          "link": 26
+          "link": 30
         },
         {
           "name": "original_size",
           "type": "TUPLE",
-          "link": 27
+          "link": 31
         },
         {
           "name": "grid_size",
           "type": "TUPLE",
-          "link": 28
+          "link": 32
         }
       ],
       "outputs": [
@@ -932,7 +932,7 @@
           "name": "RECONSTRUCTED_IMAGE",
           "type": "IMAGE",
           "links": [
-            29
+            33
           ],
           "slot_index": 0
         }
@@ -946,9 +946,185 @@
     },
     {
       "id": 24,
-      "type": "SaveImage",
+      "type": "easy mathInt",
       "pos": [
         2240,
+        120
+      ],
+      "size": [
+        380,
+        110
+      ],
+      "flags": {},
+      "order": 23,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "a",
+          "type": "INT",
+          "widget": {
+            "name": "a"
+          },
+          "link": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "INT",
+          "type": "INT",
+          "links": [
+            8
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "easy mathInt"
+      },
+      "title": "Làm tròn ô (rộng) 1/2: chia 16",
+      "widgets_values": [
+        0,
+        16,
+        "divide"
+      ]
+    },
+    {
+      "id": 25,
+      "type": "easy mathInt",
+      "pos": [
+        2240,
+        260
+      ],
+      "size": [
+        380,
+        110
+      ],
+      "flags": {},
+      "order": 24,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "a",
+          "type": "INT",
+          "widget": {
+            "name": "a"
+          },
+          "link": 8
+        }
+      ],
+      "outputs": [
+        {
+          "name": "INT",
+          "type": "INT",
+          "links": [
+            9
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "easy mathInt"
+      },
+      "title": "Làm tròn ô (rộng) 2/2: nhân 16",
+      "widgets_values": [
+        0,
+        16,
+        "multiply"
+      ]
+    },
+    {
+      "id": 26,
+      "type": "easy mathInt",
+      "pos": [
+        2240,
+        420
+      ],
+      "size": [
+        380,
+        110
+      ],
+      "flags": {},
+      "order": 25,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "a",
+          "type": "INT",
+          "widget": {
+            "name": "a"
+          },
+          "link": 10
+        }
+      ],
+      "outputs": [
+        {
+          "name": "INT",
+          "type": "INT",
+          "links": [
+            11
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "easy mathInt"
+      },
+      "title": "Làm tròn ô (cao) 1/2: chia 16",
+      "widgets_values": [
+        0,
+        16,
+        "divide"
+      ]
+    },
+    {
+      "id": 27,
+      "type": "easy mathInt",
+      "pos": [
+        2240,
+        560
+      ],
+      "size": [
+        380,
+        110
+      ],
+      "flags": {},
+      "order": 26,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "a",
+          "type": "INT",
+          "widget": {
+            "name": "a"
+          },
+          "link": 11
+        }
+      ],
+      "outputs": [
+        {
+          "name": "INT",
+          "type": "INT",
+          "links": [
+            12
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "easy mathInt"
+      },
+      "title": "Làm tròn ô (cao) 2/2: nhân 16",
+      "widgets_values": [
+        0,
+        16,
+        "multiply"
+      ]
+    },
+    {
+      "id": 28,
+      "type": "SaveImage",
+      "pos": [
+        2680,
         120
       ],
       "size": [
@@ -956,13 +1132,13 @@
         720
       ],
       "flags": {},
-      "order": 23,
+      "order": 27,
       "mode": 0,
       "inputs": [
         {
           "name": "images",
           "type": "IMAGE",
-          "link": 29
+          "link": 33
         }
       ],
       "outputs": [
@@ -1034,20 +1210,52 @@
       7,
       19,
       0,
+      24,
+      0,
+      "INT"
+    ],
+    [
+      8,
+      24,
+      0,
+      25,
+      0,
+      "INT"
+    ],
+    [
+      9,
+      25,
+      0,
       20,
       1,
       "INT"
     ],
     [
-      8,
+      10,
       19,
       1,
+      26,
+      0,
+      "INT"
+    ],
+    [
+      11,
+      26,
+      0,
+      27,
+      0,
+      "INT"
+    ],
+    [
+      12,
+      27,
+      0,
       20,
       2,
       "INT"
     ],
     [
-      9,
+      13,
       20,
       0,
       21,
@@ -1055,7 +1263,7 @@
       "IMAGE"
     ],
     [
-      10,
+      14,
       21,
       0,
       13,
@@ -1063,7 +1271,7 @@
       "IMAGE"
     ],
     [
-      11,
+      15,
       6,
       0,
       13,
@@ -1071,7 +1279,7 @@
       "VAE"
     ],
     [
-      12,
+      16,
       5,
       0,
       8,
@@ -1079,7 +1287,7 @@
       "CLIP"
     ],
     [
-      13,
+      17,
       8,
       0,
       9,
@@ -1087,7 +1295,7 @@
       "CONDITIONING"
     ],
     [
-      14,
+      18,
       4,
       0,
       10,
@@ -1095,7 +1303,7 @@
       "MODEL"
     ],
     [
-      15,
+      19,
       9,
       0,
       10,
@@ -1103,7 +1311,7 @@
       "CONDITIONING"
     ],
     [
-      16,
+      20,
       4,
       0,
       12,
@@ -1111,7 +1319,7 @@
       "MODEL"
     ],
     [
-      17,
+      21,
       7,
       0,
       14,
@@ -1119,7 +1327,7 @@
       "NOISE"
     ],
     [
-      18,
+      22,
       10,
       0,
       14,
@@ -1127,7 +1335,7 @@
       "GUIDER"
     ],
     [
-      19,
+      23,
       11,
       0,
       14,
@@ -1135,7 +1343,7 @@
       "SAMPLER"
     ],
     [
-      20,
+      24,
       12,
       0,
       14,
@@ -1143,7 +1351,7 @@
       "SIGMAS"
     ],
     [
-      21,
+      25,
       13,
       0,
       14,
@@ -1151,7 +1359,7 @@
       "LATENT"
     ],
     [
-      22,
+      26,
       14,
       0,
       15,
@@ -1159,7 +1367,7 @@
       "LATENT"
     ],
     [
-      23,
+      27,
       6,
       0,
       15,
@@ -1167,7 +1375,7 @@
       "VAE"
     ],
     [
-      24,
+      28,
       15,
       0,
       22,
@@ -1175,7 +1383,7 @@
       "IMAGE"
     ],
     [
-      25,
+      29,
       22,
       0,
       23,
@@ -1183,7 +1391,7 @@
       "IMAGE"
     ],
     [
-      26,
+      30,
       20,
       1,
       23,
@@ -1191,7 +1399,7 @@
       "LIST"
     ],
     [
-      27,
+      31,
       20,
       2,
       23,
@@ -1199,7 +1407,7 @@
       "TUPLE"
     ],
     [
-      28,
+      32,
       20,
       3,
       23,
@@ -1207,10 +1415,10 @@
       "TUPLE"
     ],
     [
-      29,
+      33,
       23,
       0,
-      24,
+      28,
       0,
       "IMAGE"
     ]
@@ -1265,9 +1473,21 @@
       "flags": {}
     },
     {
-      "title": "Ảnh Kết Quả (Final Compare)",
+      "title": "Làm tròn ô về bội số 16 (FLUX.2 cần)",
       "bounding": [
         2220,
+        20,
+        420,
+        1150
+      ],
+      "color": "#3a6b3a",
+      "font_size": 24,
+      "flags": {}
+    },
+    {
+      "title": "Ảnh Kết Quả (Final Compare)",
+      "bounding": [
+        2660,
         20,
         600,
         1150

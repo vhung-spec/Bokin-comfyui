@@ -1,6 +1,6 @@
 {
-  "last_node_id": 24,
-  "last_link_id": 29,
+  "last_node_id": 25,
+  "last_link_id": 31,
   "nodes": [
     {
       "id": 1,
@@ -101,7 +101,7 @@
         "text": ""
       },
       "widgets_values": [
-        "BOKIN 4K UPSCALE - FLUX.2 dev (TensorArt)\n\nGiữ nguyên workflow 4k-upscale cũ, chỉ sửa những chỗ FLUX.2 cần khác:\n- Load Diffusion Model: flux2_dev_fp8mixed, weight_dtype = default (file đã là fp8 mixed, ép fp8_e4m3fn làm mất các lớp giữ độ chính xác cao).\n- Load CLIP (1 ô, KHÔNG phải Load CLIP Dual): mistral_3_small_flux2_fp8 (hoặc _bf16), type = flux2. Không dùng clip_l, t5xxl, qwen2.5vl.\n- Load VAE: flux2-vae.safetensors. Không dùng ae.safetensors (của FLUX.1).\n- denoise 0.12: FLUX.2 khử nhiễu mạnh hơn FLUX.1, 0.12 trên FLUX.2 tương đương 0.25 trên FLUX.1. Để 0.25 sẽ vẽ lại quá mạnh, ảnh dễ biến dạng.\n- resolution_steps 44 + overlap_rate 0.125 + factor 3x3: giữ mỗi ô chia hết cho 16. VAE của FLUX.2 cắt ảnh theo khối 16 px, ô lẻ sẽ bị cắt rồi ghép lệch, gây mờ ở đường nối. Muốn đổi factor thì hỏi lại.\n\nCHỈNH NHANH\n- denoise: 0.10 giữ sát ảnh gốc, 0.12 cân bằng, 0.15 thêm nhiều chi tiết.\n- Tiết kiệm credit: dùng file bản Klein 4B (rẻ hơn khoảng 8 lần), hoặc steps 10 -> 8, overlap_rate 0.20 -> 0.10."
+        "BOKIN 4K UPSCALE - FLUX.2 dev (TensorArt)\n\nGiữ nguyên workflow 4k-upscale cũ, chỉ sửa những chỗ FLUX.2 cần khác:\n- Load Diffusion Model: flux2_dev_fp8mixed, weight_dtype = default (file đã là fp8 mixed, ép fp8_e4m3fn làm mất các lớp giữ độ chính xác cao).\n- Load CLIP (1 ô, KHÔNG phải Load CLIP Dual): mistral_3_small_flux2_fp8 (hoặc _bf16), type = flux2. Không dùng clip_l, t5xxl, qwen2.5vl.\n- Load VAE: flux2-vae.safetensors. Không dùng ae.safetensors (của FLUX.1).\n- denoise 0.12: FLUX.2 khử nhiễu mạnh hơn FLUX.1, 0.12 trên FLUX.2 tương đương 0.25 trên FLUX.1. Để 0.25 sẽ vẽ lại quá mạnh, ảnh dễ biến dạng.\n- resolution_steps 44 + overlap_rate 0.125 + factor 3x3: giữ mỗi ô chia hết cho 16. VAE của FLUX.2 cắt ảnh theo khối 16 px, ô lẻ sẽ bị cắt rồi ghép lệch, gây mờ ở đường nối. Muốn đổi factor thì hỏi lại.\n- Image Color Match (wavelet): lấy màu và độ sáng từ ảnh trước khi vẽ lại, giữ chi tiết mới. Chống ảnh bị tối hoặc lệch màu sau khi vẽ lại.\n\nCHỈNH NHANH\n- denoise: 0.10 giữ sát ảnh gốc, 0.12 cân bằng, 0.15 thêm nhiều chi tiết.\n- Tiết kiệm credit: dùng file bản Klein 4B (rẻ hơn khoảng 8 lần), hoặc steps 10 -> 8, overlap_rate 0.20 -> 0.10."
       ],
       "color": "#432",
       "bgcolor": "#653"
@@ -678,7 +678,8 @@
           "type": "IMAGE",
           "links": [
             5,
-            6
+            6,
+            29
           ],
           "slot_index": 0
         }
@@ -932,7 +933,7 @@
           "name": "RECONSTRUCTED_IMAGE",
           "type": "IMAGE",
           "links": [
-            29
+            30
           ],
           "slot_index": 0
         }
@@ -946,23 +947,69 @@
     },
     {
       "id": 24,
-      "type": "SaveImage",
+      "type": "easy imageColorMatch",
       "pos": [
         2240,
         120
       ],
       "size": [
         560,
-        720
+        150
       ],
       "flags": {},
       "order": 23,
       "mode": 0,
       "inputs": [
         {
-          "name": "images",
+          "name": "image_ref",
           "type": "IMAGE",
           "link": 29
+        },
+        {
+          "name": "image_target",
+          "type": "IMAGE",
+          "link": 30
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "links": [
+            31
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "easy imageColorMatch"
+      },
+      "title": "Giữ màu & độ sáng ảnh gốc (wavelet)",
+      "widgets_values": [
+        "wavelet",
+        "Hide",
+        "ComfyUI"
+      ]
+    },
+    {
+      "id": 25,
+      "type": "SaveImage",
+      "pos": [
+        2240,
+        320
+      ],
+      "size": [
+        560,
+        720
+      ],
+      "flags": {},
+      "order": 24,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 31
         }
       ],
       "outputs": [
@@ -1208,9 +1255,25 @@
     ],
     [
       29,
+      18,
+      0,
+      24,
+      0,
+      "IMAGE"
+    ],
+    [
+      30,
       23,
       0,
       24,
+      1,
+      "IMAGE"
+    ],
+    [
+      31,
+      24,
+      0,
+      25,
       0,
       "IMAGE"
     ]

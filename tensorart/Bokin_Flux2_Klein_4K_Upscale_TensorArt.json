@@ -1,6 +1,6 @@
 {
-  "last_node_id": 24,
-  "last_link_id": 29,
+  "last_node_id": 25,
+  "last_link_id": 31,
   "nodes": [
     {
       "id": 1,
@@ -101,7 +101,7 @@
         "text": ""
       },
       "widgets_values": [
-        "BOKIN 4K UPSCALE - FLUX.2 klein 4B (TensorArt, tiết kiệm credit)\n\nCùng workflow với bản FLUX.2 dev, chỉ đổi model:\n- Load Diffusion Model: flux-2-klein-4b-fp8 (KHÔNG chọn bản có chữ \"base\": bản base cần 20+ steps).\n- Load CLIP: qwen_3_4b, type = flux2.\n- Load VAE: flux2-vae.safetensors (giống bản dev).\n- steps 4, sampler euler: klein được chưng cất để chạy 4 bước. FluxGuidance không có tác dụng với klein.\n- denoise 0.12 (tương đương 0.25 trên FLUX.1).\n- resolution_steps 44 + overlap_rate 0.125 + factor 3x3: giữ mỗi ô chia hết cho 16 (VAE của FLUX.2 cần).\n\nKlein 4B dùng giấy phép Apache 2.0, được dùng thương mại.\nMuốn đẹp hơn mà vẫn rẻ: flux-2-klein-9b-fp8 + qwen_3_8b_fp8mixed (giấy phép phi thương mại)."
+        "BOKIN 4K UPSCALE - FLUX.2 klein 4B (TensorArt, tiết kiệm credit)\n\nCùng workflow với bản FLUX.2 dev, chỉ đổi model:\n- Load Diffusion Model: flux-2-klein-4b-fp8 (KHÔNG chọn bản có chữ \"base\": bản base cần 20+ steps).\n- Load CLIP: qwen_3_4b, type = flux2.\n- Load VAE: flux2-vae.safetensors (giống bản dev).\n- steps 4, sampler euler: klein được chưng cất để chạy 4 bước. FluxGuidance không có tác dụng với klein.\n- denoise 0.12 (tương đương 0.25 trên FLUX.1).\n- resolution_steps 44 + overlap_rate 0.125 + factor 3x3: giữ mỗi ô chia hết cho 16 (VAE của FLUX.2 cần).\n- Image Color Match (wavelet): klein hay làm ảnh tối hơn ảnh gốc. Node này lấy lại màu và độ sáng của ảnh gốc, giữ chi tiết klein vẽ thêm.\n\nKlein 4B dùng giấy phép Apache 2.0, được dùng thương mại.\nMuốn đẹp hơn mà vẫn rẻ: flux-2-klein-9b-fp8 + qwen_3_8b_fp8mixed (giấy phép phi thương mại)."
       ],
       "color": "#432",
       "bgcolor": "#653"
@@ -678,7 +678,8 @@
           "type": "IMAGE",
           "links": [
             5,
-            6
+            6,
+            29
           ],
           "slot_index": 0
         }
@@ -932,7 +933,7 @@
           "name": "RECONSTRUCTED_IMAGE",
           "type": "IMAGE",
           "links": [
-            29
+            30
           ],
           "slot_index": 0
         }
@@ -946,23 +947,69 @@
     },
     {
       "id": 24,
-      "type": "SaveImage",
+      "type": "easy imageColorMatch",
       "pos": [
         2240,
         120
       ],
       "size": [
         560,
-        720
+        150
       ],
       "flags": {},
       "order": 23,
       "mode": 0,
       "inputs": [
         {
-          "name": "images",
+          "name": "image_ref",
           "type": "IMAGE",
           "link": 29
+        },
+        {
+          "name": "image_target",
+          "type": "IMAGE",
+          "link": 30
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "links": [
+            31
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "easy imageColorMatch"
+      },
+      "title": "Giữ màu & độ sáng ảnh gốc (wavelet)",
+      "widgets_values": [
+        "wavelet",
+        "Hide",
+        "ComfyUI"
+      ]
+    },
+    {
+      "id": 25,
+      "type": "SaveImage",
+      "pos": [
+        2240,
+        320
+      ],
+      "size": [
+        560,
+        720
+      ],
+      "flags": {},
+      "order": 24,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 31
         }
       ],
       "outputs": [
@@ -1208,9 +1255,25 @@
     ],
     [
       29,
+      18,
+      0,
+      24,
+      0,
+      "IMAGE"
+    ],
+    [
+      30,
       23,
       0,
       24,
+      1,
+      "IMAGE"
+    ],
+    [
+      31,
+      24,
+      0,
+      25,
       0,
       "IMAGE"
     ]

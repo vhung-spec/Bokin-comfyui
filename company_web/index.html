@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bokin Upscale 4K</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%237c5cff'/%3E%3Cstop offset='1' stop-color='%2322d3ee'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='16' fill='url(%23g)'/%3E%3Ctext x='32' y='45' font-family='Arial' font-weight='700' font-size='38' text-anchor='middle' fill='white'%3EB%3C/text%3E%3C/svg%3E">
+<style>
+  :root {
+    --bg: #0e1015; --panel: #151820; --card: #1b1f29; --card-2: #222734; --border: #2a3040;
+    --text: #e9ecf3; --muted: #9099ab; --accent: #7c5cff; --accent-2: #22d3ee;
+    --danger: #ff6b6b; --ok: #3ddc97; --warn: #f5b84b; --radius: 14px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--text);
+    font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+  button { font: inherit; color: inherit; }
+  a { color: var(--accent-2); }
+
+  .top { display: flex; align-items: center; gap: 12px; padding: 12px 20px; border-bottom: 1px solid var(--border);
+    background: var(--panel); position: sticky; top: 0; z-index: 5; }
+  .logo { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; color: #fff;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2)); font-weight: 800; flex: none; }
+  .brand { font-weight: 700; font-size: 17px; }
+  .sub { margin-left: auto; color: var(--muted); font-size: 13px; text-align: right; }
+
+  main { max-width: 980px; margin: 0 auto; padding: 20px 16px 48px; display: flex; flex-direction: column; gap: 16px; }
+  .banner { display: none; border: 1px solid var(--danger); background: rgba(255, 107, 107, .1); color: #ffd3d3;
+    border-radius: var(--radius); padding: 12px 14px; }
+  .banner.show { display: block; }
+
+  .drop { display: grid; place-items: center; gap: 6px; min-height: 190px; padding: 24px; text-align: center;
+    border: 1.5px dashed var(--border); border-radius: var(--radius); background: var(--card); cursor: pointer;
+    transition: border-color .15s, background .15s; }
+  .drop:hover, .drop:focus-visible, .drop.drag { border-color: var(--accent); background: #20253a; outline: none; }
+  .drop .icon { width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; font-size: 22px;
+    background: rgba(124, 92, 255, .18); color: #c9bcff; }
+  .drop strong { font-size: 16px; }
+  .drop small { color: var(--muted); }
+
+  .bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .bar h2 { margin: 0; font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+  .counts { color: var(--muted); font-size: 13px; }
+  .bar .spacer { flex: 1; }
+  .btn { border: 1px solid var(--border); background: var(--card-2); border-radius: 10px; padding: 7px 12px; cursor: pointer;
+    text-decoration: none; color: var(--text); font-size: 13px; white-space: nowrap; }
+  .btn:hover { border-color: #3c4458; }
+  .btn.primary { border: 0; background: linear-gradient(135deg, var(--accent), #4f7bff 60%, var(--accent-2)); color: #fff;
+    font-weight: 600; }
+  .btn[disabled] { opacity: .45; cursor: default; }
+
+  .list { display: flex; flex-direction: column; gap: 10px; }
+  .empty { color: var(--muted); text-align: center; padding: 18px; border: 1px solid var(--border); border-radius: var(--radius); }
+  .item { display: grid; grid-template-columns: 96px 1fr auto; gap: 14px; align-items: center; padding: 10px;
+    background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); }
+  .thumb { width: 96px; height: 64px; border-radius: 9px; object-fit: cover; background: var(--card-2); display: block; }
+  .info { min-width: 0; }
+  .name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .detail { color: var(--muted); font-size: 12.5px; margin-top: 2px; }
+  .state { display: inline-flex; align-items: center; gap: 6px; margin-top: 6px; font-size: 12.5px; padding: 2px 9px;
+    border-radius: 99px; background: var(--card-2); border: 1px solid var(--border); }
+  .state::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--muted); }
+  .state.busy::before { background: var(--accent-2); animation: pulse 1.2s ease-in-out infinite; }
+  .state.done { border-color: rgba(61, 220, 151, .5); } .state.done::before { background: var(--ok); }
+  .state.failed { border-color: rgba(255, 107, 107, .5); color: #ffd3d3; } .state.failed::before { background: var(--danger); }
+  .error { color: #ffb3b3; font-size: 12.5px; margin-top: 4px; overflow-wrap: anywhere; }
+  .actions { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+  @keyframes pulse { 50% { opacity: .3; } }
+
+  .note { color: var(--muted); font-size: 12.5px; }
+  @media (max-width: 640px) {
+    .sub { display: none; }
+    .item { grid-template-columns: 72px 1fr; }
+    .thumb { width: 72px; height: 54px; }
+    .actions { grid-column: 1 / -1; justify-content: flex-start; }
+  }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="logo">B</div>
+  <div class="brand">Bokin Upscale 4K</div>
+  <div class="sub">FLUX.2 Klein · chạy trên TensorArt</div>
+</header>
+
+<main>
+  <div class="banner" id="banner"></div>
+
+  <div class="drop" id="drop" tabindex="0" role="button" aria-label="Chọn ảnh để upscale">
+    <div class="icon">⇪</div>
+    <strong>Kéo thả ảnh vào đây hoặc bấm để chọn</strong>
+    <small>JPG, PNG, WebP · chọn được nhiều ảnh cùng lúc · ảnh ra khoảng 4K (8 MP), giữ đúng tỉ lệ</small>
+    <input type="file" id="file" accept="image/*" multiple hidden>
+  </div>
+
+  <div class="bar">
+    <h2>Danh sách ảnh</h2>
+    <span class="counts" id="counts"></span>
+    <span class="spacer"></span>
+    <button class="btn" id="clearDone" disabled>Xoá ảnh đã xong</button>
+    <button class="btn primary" id="downloadAll" disabled>Tải tất cả ảnh đã xong</button>
+  </div>
+  <div class="list" id="list"><div class="empty">Chưa có ảnh nào.</div></div>
+  <p class="note">Mỗi ảnh là một lượt chạy trên TensorArt, thường mất 1–3 phút tuỳ hàng chờ. Có thể đóng tab sau khi đã tải ảnh về.
+    Ảnh kết quả chỉ giữ trên TensorArt một thời gian, nên tải về sớm.</p>
+</main>
+
+<script>
+const MAX_PARALLEL = 3, POLL_MS = 4000;
+const $ = (id) => document.getElementById(id);
+const items = [];
+let running = 0, seq = 0;
+
+const LABELS = {
+  queued: "Chờ đến lượt", uploading: "Đang tải ảnh lên", waiting: "Đang xếp hàng",
+  running: "Đang upscale", done: "Xong", failed: "Lỗi",
+};
+
+function fmtTime(ms) {
+  const s = Math.round(ms / 1000);
+  return s < 60 ? `${s} giây` : `${Math.floor(s / 60)} phút ${s % 60} giây`;
+}
+
+function resultUrl(it, view) {
+  return `/api/jobs/${encodeURIComponent(it.jobId)}/image?name=${encodeURIComponent(it.file.name)}${view ? "&view=1" : ""}`;
+}
+
+function render() {
+  const list = $("list");
+  if (!items.length) {
+    list.innerHTML = '<div class="empty">Chưa có ảnh nào.</div>';
+  } else {
+    if (list.querySelector(".empty")) list.innerHTML = "";
+    for (const it of items) {
+      if (!it.el) {
+        it.el = document.createElement("div");
+        it.el.className = "item";
+        it.el.innerHTML = `<img class="thumb" alt=""><div class="info"><div class="name"></div><div class="detail"></div>
+          <span class="state"></span><div class="error"></div></div><div class="actions"></div>`;
+        it.el.querySelector(".thumb").src = it.preview;
+        it.el.querySelector(".name").textContent = it.file.name;
+        list.appendChild(it.el);
+      }
+      const busy = ["uploading", "waiting", "running"].includes(it.state);
+      let label = LABELS[it.state];
+      if (it.state === "waiting" && it.queueRank) label += ` (vị trí ${it.queueRank}/${it.queueLen || "?"})`;
+      if (busy && it.started) label += ` · ${fmtTime(Date.now() - it.started)}`;
+      if (it.state === "done" && it.finished) label += ` sau ${fmtTime(it.finished - it.started)}`;
+      const state = it.el.querySelector(".state");
+      state.className = "state" + (busy ? " busy" : "") + (it.state === "done" ? " done" : "") + (it.state === "failed" ? " failed" : "");
+      state.textContent = label;
+      it.el.querySelector(".detail").textContent =
+        [(it.width ? `${it.width}×${it.height}` : ""), `${(it.file.size / 1048576).toFixed(1)} MB`].filter(Boolean).join(" · ");
+      it.el.querySelector(".error").textContent = it.state === "failed" ? it.error || "" : "";
+      const actions = it.el.querySelector(".actions");
+      const key = it.state + (it.jobId || "");
+      if (actions.dataset.key !== key) {
+        actions.dataset.key = key;
+        actions.innerHTML = "";
+        if (it.state === "done") {
+          actions.append(link("Xem", resultUrl(it, true), true), link("Tải ảnh 4K", resultUrl(it, false), false, "primary"));
+        }
+        if (it.state === "failed") actions.append(button("Thử lại", () => { it.state = "queued"; it.error = ""; pump(); }));
+        if (!busy) actions.append(button("Xoá", () => remove(it)));
+      }
+    }
+  }
+  const done = items.filter((i) => i.state === "done").length;
+  const busy = items.filter((i) => ["queued", "uploading", "waiting", "running"].includes(i.state)).length;
+  const failed = items.filter((i) => i.state === "failed").length;
+  $("counts").textContent = items.length ? `${busy} đang chờ/xử lý · ${done} xong` + (failed ? ` · ${failed} lỗi` : "") : "";
+  $("downloadAll").disabled = !done;
+  $("clearDone").disabled = !done;
+}
+
+function link(text, href, newTab, cls) {
+  const a = document.createElement("a");
+  a.className = "btn" + (cls ? " " + cls : "");
+  a.textContent = text;
+  a.href = href;
+  if (newTab) { a.target = "_blank"; a.rel = "noopener"; }
+  return a;
+}
+
+function button(text, onClick) {
+  const b = document.createElement("button");
+  b.className = "btn";
+  b.textContent = text;
+  b.onclick = onClick;
+  return b;
+}
+
+function remove(it) {
+  items.splice(items.indexOf(it), 1);
+  it.el?.remove();
+  URL.revokeObjectURL(it.preview);
+  render();
+}
+
+function addFiles(files) {
+  for (const file of files) {
+    if (!file.type.startsWith("image/")) continue;
+    const it = { id: ++seq, file, preview: URL.createObjectURL(file), state: "queued" };
+    const img = new Image();
+    img.onload = () => { it.width = img.naturalWidth; it.height = img.naturalHeight; render(); };
+    img.src = it.preview;
+    items.push(it);
+  }
+  render();
+  pump();
+}
+
+function pump() {
+  render();
+  while (running < MAX_PARALLEL) {
+    const it = items.find((i) => i.state === "queued");
+    if (!it) break;
+    running++;
+    process(it).finally(() => { running--; pump(); });
+  }
+}
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+async function process(it) {
+  it.state = "uploading"; it.started = Date.now(); it.jobId = null; render();
+  try {
+    const res = await fetch("/api/jobs", { method: "POST", headers: { "Content-Type": it.file.type || "image/png" }, body: it.file });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || `Máy chủ trả lỗi ${res.status}`);
+    it.jobId = data.jobId; it.state = "waiting"; render();
+    let misses = 0;
+    while (true) {
+      await sleep(POLL_MS);
+      let st;
+      try {
+        const r = await fetch(`/api/jobs/${encodeURIComponent(it.jobId)}`, { cache: "no-store" });
+        st = await r.json();
+        if (!r.ok) throw new Error(st.error || `Máy chủ trả lỗi ${r.status}`);
+        misses = 0;
+      } catch (e) {
+        if (++misses >= 8) throw e;
+        continue;
+      }
+      if (st.status === "done") { it.state = "done"; it.finished = Date.now(); render(); return; }
+      if (st.status === "failed") throw new Error(st.error || "TensorArt báo lỗi.");
+      it.state = st.status; it.queueRank = st.queueRank; it.queueLen = st.queueLen; render();
+    }
+  } catch (e) {
+    it.state = "failed"; it.error = e.message; render();
+  }
+}
+
+const drop = $("drop"), input = $("file");
+drop.onclick = () => input.click();
+drop.onkeydown = (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); input.click(); } };
+input.onchange = () => { addFiles(input.files); input.value = ""; };
+for (const ev of ["dragenter", "dragover"]) drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add("drag"); });
+for (const ev of ["dragleave", "drop"]) drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.remove("drag"); });
+drop.addEventListener("drop", (e) => addFiles(e.dataTransfer.files));
+document.addEventListener("paste", (e) => addFiles([...e.clipboardData.files]));
+
+$("downloadAll").onclick = async () => {
+  for (const it of items.filter((i) => i.state === "done")) {
+    link("", resultUrl(it, false)).click();
+    await sleep(800);
+  }
+};
+$("clearDone").onclick = () => items.filter((i) => i.state === "done").forEach(remove);
+window.addEventListener("beforeunload", (e) => {
+  if (items.some((i) => ["queued", "uploading", "waiting", "running"].includes(i.state))) e.preventDefault();
+});
+setInterval(() => { if (items.some((i) => ["uploading", "waiting", "running"].includes(i.state))) render(); }, 1000);
+
+fetch("/api/status").then((r) => r.json()).then((s) => {
+  if (!s.configured) {
+    $("banner").textContent = "Máy chủ chưa cấu hình xong (thiếu " + s.missing.join(", ") + "). Báo quản trị viên.";
+    $("banner").classList.add("show");
+  }
+}).catch(() => {});
+</script>
+</body>
+</html>

@@ -1,0 +1,481 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bokin Upscale 4K</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%237c5cff'/%3E%3Cstop offset='1' stop-color='%2322d3ee'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='16' fill='url(%23g)'/%3E%3Ctext x='32' y='45' font-family='Arial' font-weight='700' font-size='38' text-anchor='middle' fill='white'%3EB%3C/text%3E%3C/svg%3E">
+<style>
+  :root {
+    --bg: #0e1015; --panel: #151820; --card: #1b1f29; --card-2: #222734; --border: #2a3040;
+    --text: #e9ecf3; --muted: #9099ab; --accent: #7c5cff; --accent-2: #22d3ee;
+    --danger: #ff6b6b; --ok: #3ddc97; --radius: 14px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--text);
+    font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+  button, select, input, textarea { font: inherit; color: inherit; }
+  a { color: var(--accent-2); }
+
+  .top { display: flex; align-items: center; gap: 12px; padding: 12px 20px; border-bottom: 1px solid var(--border);
+    background: var(--panel); position: sticky; top: 0; z-index: 5; }
+  .logo { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; color: #fff;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2)); font-weight: 800; flex: none; }
+  .brand { font-weight: 700; font-size: 17px; }
+  .sub { margin-left: auto; color: var(--muted); font-size: 13px; text-align: right; }
+
+  .layout { max-width: 1240px; margin: 0 auto; padding: 20px 16px 48px; display: grid; grid-template-columns: 340px 1fr;
+    gap: 18px; align-items: start; }
+  .side { display: flex; flex-direction: column; gap: 14px; position: sticky; top: 76px; }
+  .main { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; }
+  .card h2 { margin: 0 0 10px; font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase;
+    letter-spacing: .04em; display: flex; align-items: center; gap: 8px; }
+  .card h2 .link { margin-left: auto; text-transform: none; letter-spacing: 0; font-weight: 500; }
+  .banner { display: none; border: 1px solid var(--danger); background: rgba(255, 107, 107, .1); color: #ffd3d3;
+    border-radius: var(--radius); padding: 12px 14px; }
+  .banner.show { display: block; }
+
+  .types { display: flex; flex-direction: column; gap: 8px; }
+  .type { text-align: left; background: var(--card-2); border: 1px solid var(--border); border-radius: 11px; padding: 10px 12px;
+    cursor: pointer; transition: border-color .15s, background .15s; }
+  .type:hover { border-color: #3c4458; }
+  .type.active { border-color: var(--accent); background: rgba(124, 92, 255, .16); }
+  .type[disabled] { cursor: default; opacity: .6; }
+  .type b { display: block; font-size: 14.5px; }
+  .type span { display: block; color: var(--muted); font-size: 12.5px; margin-top: 2px; }
+  .type .err { color: #ffb3b3; }
+  .muted { color: var(--muted); font-size: 13px; }
+
+  .params { display: flex; flex-direction: column; gap: 14px; }
+  .param label { display: flex; justify-content: space-between; gap: 8px; font-weight: 600; font-size: 13px; margin-bottom: 6px; }
+  .param .row { display: flex; align-items: center; gap: 10px; }
+  .param input[type=range] { flex: 1; accent-color: var(--accent); min-width: 0; }
+  .param input[type=number], .param select, .param textarea { background: var(--card-2); border: 1px solid var(--border);
+    border-radius: 9px; padding: 6px 8px; outline: none; }
+  .param input[type=number] { width: 84px; text-align: right; }
+  .param select, .param textarea { width: 100%; }
+  .param textarea { min-height: 84px; resize: vertical; font-size: 12.5px; }
+  .param input:focus, .param select:focus, .param textarea:focus { border-color: var(--accent); }
+  .param .hint { color: var(--muted); font-size: 12px; margin-top: 5px; }
+  .linkbtn { background: none; border: 0; padding: 0; color: var(--accent-2); cursor: pointer; font-size: 12.5px; }
+
+  .drop { display: grid; place-items: center; gap: 6px; min-height: 180px; padding: 24px; text-align: center;
+    border: 1.5px dashed var(--border); border-radius: var(--radius); background: var(--card); cursor: pointer;
+    transition: border-color .15s, background .15s; }
+  .drop:hover, .drop:focus-visible, .drop.drag { border-color: var(--accent); background: #20253a; outline: none; }
+  .drop .icon { width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; font-size: 22px;
+    background: rgba(124, 92, 255, .18); color: #c9bcff; }
+  .drop strong { font-size: 16px; }
+  .drop small { color: var(--muted); }
+  .drop .using { color: var(--text); font-size: 13px; }
+
+  .bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .bar h2 { margin: 0; font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+  .counts { color: var(--muted); font-size: 13px; }
+  .bar .spacer { flex: 1; }
+  .btn { border: 1px solid var(--border); background: var(--card-2); border-radius: 10px; padding: 7px 12px; cursor: pointer;
+    text-decoration: none; color: var(--text); font-size: 13px; white-space: nowrap; }
+  .btn:hover { border-color: #3c4458; }
+  .btn.primary { border: 0; background: linear-gradient(135deg, var(--accent), #4f7bff 60%, var(--accent-2)); color: #fff;
+    font-weight: 600; }
+  .btn[disabled] { opacity: .45; cursor: default; }
+
+  .list { display: flex; flex-direction: column; gap: 10px; }
+  .empty { color: var(--muted); text-align: center; padding: 18px; border: 1px solid var(--border); border-radius: var(--radius); }
+  .item { display: grid; grid-template-columns: 96px 1fr auto; gap: 14px; align-items: center; padding: 10px;
+    background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); }
+  .thumb { width: 96px; height: 64px; border-radius: 9px; object-fit: cover; background: var(--card-2); display: block; }
+  .info { min-width: 0; }
+  .name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .detail { color: var(--muted); font-size: 12.5px; margin-top: 2px; overflow-wrap: anywhere; }
+  .state { display: inline-flex; align-items: center; gap: 6px; margin-top: 6px; font-size: 12.5px; padding: 2px 9px;
+    border-radius: 99px; background: var(--card-2); border: 1px solid var(--border); }
+  .state::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--muted); flex: none; }
+  .state.busy::before { background: var(--accent-2); animation: pulse 1.2s ease-in-out infinite; }
+  .state.done { border-color: rgba(61, 220, 151, .5); } .state.done::before { background: var(--ok); }
+  .state.failed { border-color: rgba(255, 107, 107, .5); color: #ffd3d3; } .state.failed::before { background: var(--danger); }
+  .error { color: #ffb3b3; font-size: 12.5px; margin-top: 4px; overflow-wrap: anywhere; }
+  .actions { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+  @keyframes pulse { 50% { opacity: .3; } }
+  .note { color: var(--muted); font-size: 12.5px; margin: 0; }
+
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; }
+    .side { position: static; }
+  }
+  @media (max-width: 640px) {
+    .sub { display: none; }
+    .item { grid-template-columns: 72px 1fr; }
+    .thumb { width: 72px; height: 54px; }
+    .actions { grid-column: 1 / -1; justify-content: flex-start; }
+  }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="logo">B</div>
+  <div class="brand">Bokin Upscale 4K</div>
+  <div class="sub">Chạy trên TensorArt</div>
+</header>
+
+<div class="layout">
+  <aside class="side">
+    <div class="banner" id="banner"></div>
+    <section class="card">
+      <h2>Kiểu upscale</h2>
+      <div class="types" id="types"><div class="muted">Đang tải danh sách…</div></div>
+    </section>
+    <section class="card" id="paramsCard" hidden>
+      <h2>Thông số <button class="linkbtn link" id="resetParams" type="button">Đặt lại mặc định</button></h2>
+      <div class="params" id="params"></div>
+    </section>
+  </aside>
+
+  <main class="main">
+    <div class="drop" id="drop" tabindex="0" role="button" aria-label="Chọn ảnh để upscale">
+      <div class="icon">⇪</div>
+      <strong>Kéo thả ảnh vào đây hoặc bấm để chọn</strong>
+      <span class="using" id="using"></span>
+      <small>JPG, PNG, WebP · chọn được nhiều ảnh cùng lúc · mỗi ảnh dùng kiểu và thông số đang chọn lúc thêm vào</small>
+      <input type="file" id="file" accept="image/*" multiple hidden>
+    </div>
+
+    <div class="bar">
+      <h2>Danh sách ảnh</h2>
+      <span class="counts" id="counts"></span>
+      <span class="spacer"></span>
+      <button class="btn" id="clearDone" disabled>Xoá ảnh đã xong</button>
+      <button class="btn primary" id="downloadAll" disabled>Tải tất cả ảnh đã xong</button>
+    </div>
+    <div class="list" id="list"><div class="empty">Chưa có ảnh nào.</div></div>
+    <p class="note">Mỗi ảnh là một lượt chạy trên TensorArt, thường mất 1–3 phút tuỳ hàng chờ. Có thể đóng tab sau khi đã tải ảnh về.
+      Ảnh kết quả chỉ giữ trên TensorArt một thời gian, nên tải về sớm.</p>
+  </main>
+</div>
+
+<script>
+const MAX_PARALLEL = 3, POLL_MS = 4000;
+const $ = (id) => document.getElementById(id);
+const items = [];
+let running = 0, seq = 0, upscalers = [], current = null, values = {};
+
+const LABELS = {
+  queued: "Chờ đến lượt", uploading: "Đang tải ảnh lên", waiting: "Đang xếp hàng",
+  running: "Đang upscale", done: "Xong", failed: "Lỗi",
+};
+
+const store = {
+  get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+};
+
+// ---------- upscale types and settings ----------
+function fmtNumber(p, v) {
+  if (p.integer) return String(Math.round(v));
+  const decimals = Math.max(0, (String(p.step ?? 0.01).split(".")[1] || "").length);
+  return Number(v).toFixed(decimals);
+}
+
+function clamp(p, v) {
+  v = Number(v);
+  if (!Number.isFinite(v)) v = p.default;
+  if (p.min !== undefined) v = Math.max(p.min, v);
+  if (p.max !== undefined) v = Math.min(p.max, v);
+  return v;
+}
+
+function renderTypes() {
+  const box = $("types");
+  box.innerHTML = "";
+  if (!upscalers.length) {
+    box.innerHTML = '<div class="muted">Chưa có kiểu upscale nào. Báo quản trị viên.</div>';
+    return;
+  }
+  for (const up of upscalers) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "type" + (current && current.key === up.key ? " active" : "");
+    b.disabled = Boolean(up.error);
+    b.innerHTML = "<b></b><span></span>";
+    b.querySelector("b").textContent = up.name;
+    const span = b.querySelector("span");
+    span.textContent = up.error || up.description || "";
+    if (up.error) span.className = "err";
+    b.onclick = () => selectType(up.key);
+    box.appendChild(b);
+  }
+}
+
+function selectType(key) {
+  current = upscalers.find((u) => u.key === key && !u.error) || upscalers.find((u) => !u.error) || null;
+  values = {};
+  if (current) {
+    const saved = store.get("bokin.params." + current.key) || {};
+    for (const p of current.params) values[p.key] = saved[p.key] ?? p.default;
+    store.set("bokin.type", current.key);
+  }
+  renderTypes();
+  renderParams();
+}
+
+function saveValues() { if (current) store.set("bokin.params." + current.key, values); updateUsing(); }
+
+function renderParams() {
+  const box = $("params");
+  box.innerHTML = "";
+  $("paramsCard").hidden = !current || !current.params.length;
+  if (!current) return updateUsing();
+  for (const p of current.params) {
+    const wrap = document.createElement("div");
+    wrap.className = "param";
+    const label = document.createElement("label");
+    label.textContent = p.label;
+    wrap.appendChild(label);
+    if (p.type === "number") {
+      values[p.key] = clamp(p, values[p.key]);
+      const row = document.createElement("div");
+      row.className = "row";
+      const num = document.createElement("input");
+      num.type = "number";
+      num.step = p.integer ? 1 : (p.step ?? "any");
+      if (p.min !== undefined) num.min = p.min;
+      if (p.max !== undefined) num.max = p.max;
+      num.value = fmtNumber(p, values[p.key]);
+      num.setAttribute("aria-label", p.label);
+      let range = null;
+      if (p.min !== undefined && p.max !== undefined) {
+        range = document.createElement("input");
+        range.type = "range";
+        range.min = p.min; range.max = p.max; range.step = p.integer ? 1 : (p.step ?? 0.01);
+        range.value = values[p.key];
+        range.setAttribute("aria-label", p.label);
+        range.oninput = () => { values[p.key] = clamp(p, range.value); num.value = fmtNumber(p, values[p.key]); saveValues(); };
+        row.appendChild(range);
+      }
+      num.onchange = () => {
+        values[p.key] = clamp(p, num.value);
+        num.value = fmtNumber(p, values[p.key]);
+        if (range) range.value = values[p.key];
+        saveValues();
+      };
+      row.appendChild(num);
+      wrap.appendChild(row);
+    } else if (p.type === "select") {
+      const sel = document.createElement("select");
+      for (const o of p.options) sel.add(new Option(o, o));
+      if (!p.options.includes(values[p.key])) values[p.key] = p.default;
+      sel.value = values[p.key];
+      sel.onchange = () => { values[p.key] = sel.value; saveValues(); };
+      sel.setAttribute("aria-label", p.label);
+      wrap.appendChild(sel);
+    } else {
+      const ta = document.createElement("textarea");
+      ta.value = values[p.key] ?? "";
+      ta.oninput = () => { values[p.key] = ta.value; saveValues(); };
+      ta.setAttribute("aria-label", p.label);
+      wrap.appendChild(ta);
+    }
+    if (p.hint) {
+      const hint = document.createElement("div");
+      hint.className = "hint";
+      hint.textContent = p.hint;
+      wrap.appendChild(hint);
+    }
+    box.appendChild(wrap);
+  }
+  updateUsing();
+}
+
+function summary(up, vals) {
+  const parts = [up.name];
+  for (const p of up.params) if (p.type !== "text") parts.push(`${p.key} ${p.type === "number" ? fmtNumber(p, vals[p.key]) : vals[p.key]}`);
+  return parts.join(" · ");
+}
+
+function updateUsing() { $("using").textContent = current ? "Đang chọn: " + summary(current, values) : ""; }
+
+$("resetParams").onclick = () => {
+  if (!current) return;
+  for (const p of current.params) values[p.key] = p.default;
+  saveValues();
+  renderParams();
+};
+
+// ---------- queue ----------
+function fmtTime(ms) {
+  const s = Math.round(ms / 1000);
+  return s < 60 ? `${s} giây` : `${Math.floor(s / 60)} phút ${s % 60} giây`;
+}
+
+function resultUrl(it, view) {
+  return `/api/jobs/${encodeURIComponent(it.jobId)}/image?name=${encodeURIComponent(it.file.name)}${view ? "&view=1" : ""}`;
+}
+
+function render() {
+  const list = $("list");
+  if (!items.length) {
+    list.innerHTML = '<div class="empty">Chưa có ảnh nào.</div>';
+  } else {
+    if (list.querySelector(".empty")) list.innerHTML = "";
+    for (const it of items) {
+      if (!it.el) {
+        it.el = document.createElement("div");
+        it.el.className = "item";
+        it.el.innerHTML = `<img class="thumb" alt=""><div class="info"><div class="name"></div><div class="detail"></div>
+          <div class="detail settings"></div><span class="state"></span><div class="error"></div></div><div class="actions"></div>`;
+        it.el.querySelector(".thumb").src = it.preview;
+        it.el.querySelector(".name").textContent = it.file.name;
+        it.el.querySelector(".settings").textContent = it.summary;
+        list.appendChild(it.el);
+      }
+      const busy = ["uploading", "waiting", "running"].includes(it.state);
+      let label = LABELS[it.state];
+      if (it.state === "waiting" && it.queueRank) label += ` (vị trí ${it.queueRank}/${it.queueLen || "?"})`;
+      if (busy && it.started) label += ` · ${fmtTime(Date.now() - it.started)}`;
+      if (it.state === "done" && it.finished) label += ` sau ${fmtTime(it.finished - it.started)}`;
+      const state = it.el.querySelector(".state");
+      state.className = "state" + (busy ? " busy" : "") + (it.state === "done" ? " done" : "") + (it.state === "failed" ? " failed" : "");
+      state.textContent = label;
+      it.el.querySelector(".detail").textContent =
+        [(it.width ? `${it.width}×${it.height}` : ""), `${(it.file.size / 1048576).toFixed(1)} MB`].filter(Boolean).join(" · ");
+      it.el.querySelector(".error").textContent = it.state === "failed" ? it.error || "" : "";
+      const actions = it.el.querySelector(".actions");
+      const key = it.state + (it.jobId || "");
+      if (actions.dataset.key !== key) {
+        actions.dataset.key = key;
+        actions.innerHTML = "";
+        if (it.state === "done") {
+          actions.append(link("Xem", resultUrl(it, true), true), link("Tải ảnh", resultUrl(it, false), false, "primary"));
+        }
+        if (it.state === "failed") actions.append(button("Thử lại", () => { it.state = "queued"; it.error = ""; pump(); }));
+        if (!busy) actions.append(button("Xoá", () => remove(it)));
+      }
+    }
+  }
+  const done = items.filter((i) => i.state === "done").length;
+  const busy = items.filter((i) => ["queued", "uploading", "waiting", "running"].includes(i.state)).length;
+  const failed = items.filter((i) => i.state === "failed").length;
+  $("counts").textContent = items.length ? `${busy} đang chờ/xử lý · ${done} xong` + (failed ? ` · ${failed} lỗi` : "") : "";
+  $("downloadAll").disabled = !done;
+  $("clearDone").disabled = !done;
+}
+
+function link(text, href, newTab, cls) {
+  const a = document.createElement("a");
+  a.className = "btn" + (cls ? " " + cls : "");
+  a.textContent = text;
+  a.href = href;
+  if (newTab) { a.target = "_blank"; a.rel = "noopener"; }
+  return a;
+}
+
+function button(text, onClick) {
+  const b = document.createElement("button");
+  b.className = "btn";
+  b.textContent = text;
+  b.onclick = onClick;
+  return b;
+}
+
+function remove(it) {
+  items.splice(items.indexOf(it), 1);
+  it.el?.remove();
+  URL.revokeObjectURL(it.preview);
+  render();
+}
+
+function addFiles(files) {
+  if (!current) { alert("Chưa chọn được kiểu upscale nào. Báo quản trị viên."); return; }
+  for (const file of files) {
+    if (!file.type.startsWith("image/")) continue;
+    const params = {};
+    for (const p of current.params) params[p.key] = p.type === "number" ? Number(fmtNumber(p, values[p.key])) : values[p.key];
+    const it = { id: ++seq, file, preview: URL.createObjectURL(file), state: "queued",
+                 type: current.key, params, summary: summary(current, params) };
+    const img = new Image();
+    img.onload = () => { it.width = img.naturalWidth; it.height = img.naturalHeight; render(); };
+    img.src = it.preview;
+    items.push(it);
+  }
+  render();
+  pump();
+}
+
+function pump() {
+  render();
+  while (running < MAX_PARALLEL) {
+    const it = items.find((i) => i.state === "queued");
+    if (!it) break;
+    running++;
+    process(it).finally(() => { running--; pump(); });
+  }
+}
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+async function process(it) {
+  it.state = "uploading"; it.started = Date.now(); it.jobId = null; render();
+  try {
+    const url = `/api/jobs?type=${encodeURIComponent(it.type)}&params=${encodeURIComponent(JSON.stringify(it.params))}`;
+    const res = await fetch(url, { method: "POST", headers: { "Content-Type": it.file.type || "image/png" }, body: it.file });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || `Máy chủ trả lỗi ${res.status}`);
+    it.jobId = data.jobId; it.state = "waiting"; render();
+    let misses = 0;
+    while (true) {
+      await sleep(POLL_MS);
+      let st;
+      try {
+        const r = await fetch(`/api/jobs/${encodeURIComponent(it.jobId)}`, { cache: "no-store" });
+        st = await r.json();
+        if (!r.ok) throw new Error(st.error || `Máy chủ trả lỗi ${r.status}`);
+        misses = 0;
+      } catch (e) {
+        if (++misses >= 8) throw e;
+        continue;
+      }
+      if (st.status === "done") { it.state = "done"; it.finished = Date.now(); render(); return; }
+      if (st.status === "failed") throw new Error(st.error || "TensorArt báo lỗi.");
+      it.state = st.status; it.queueRank = st.queueRank; it.queueLen = st.queueLen; render();
+    }
+  } catch (e) {
+    it.state = "failed"; it.error = e.message; render();
+  }
+}
+
+const drop = $("drop"), input = $("file");
+drop.onclick = () => input.click();
+drop.onkeydown = (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); input.click(); } };
+input.onchange = () => { addFiles(input.files); input.value = ""; };
+for (const ev of ["dragenter", "dragover"]) drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add("drag"); });
+for (const ev of ["dragleave", "drop"]) drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.remove("drag"); });
+drop.addEventListener("drop", (e) => addFiles(e.dataTransfer.files));
+document.addEventListener("paste", (e) => { if (e.clipboardData.files.length) addFiles([...e.clipboardData.files]); });
+
+$("downloadAll").onclick = async () => {
+  for (const it of items.filter((i) => i.state === "done")) {
+    link("", resultUrl(it, false)).click();
+    await sleep(800);
+  }
+};
+$("clearDone").onclick = () => items.filter((i) => i.state === "done").forEach(remove);
+window.addEventListener("beforeunload", (e) => {
+  if (items.some((i) => ["queued", "uploading", "waiting", "running"].includes(i.state))) e.preventDefault();
+});
+setInterval(() => { if (items.some((i) => ["uploading", "waiting", "running"].includes(i.state))) render(); }, 1000);
+
+fetch("/api/status").then((r) => r.json()).then((s) => {
+  if (!s.configured) {
+    $("banner").textContent = "Máy chủ chưa cấu hình xong (thiếu " + s.missing.join(", ") + "). Báo quản trị viên.";
+    $("banner").classList.add("show");
+  }
+}).catch(() => {});
+
+fetch("/api/upscalers").then((r) => r.json()).then((d) => {
+  upscalers = d.upscalers || [];
+  selectType(store.get("bokin.type"));
+}).catch(() => { $("types").innerHTML = '<div class="muted">Không tải được danh sách kiểu upscale.</div>'; });
+</script>
+</body>
+</html>

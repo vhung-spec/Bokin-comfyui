@@ -1,0 +1,223 @@
+# Workflow cho TensorArt – Bokin Photoreal Upscale (Flux)
+
+Các workflow phóng to ảnh rồi vẽ lại chi tiết bằng Flux:
+
+| File | Kích thước ra | Dùng khi |
+|---|---|---|
+| `Bokin_Flux_Photoreal_Upscale_TensorArt.json` | luôn khoảng **4K (8 MP)**, ảnh gốc to hay nhỏ đều vậy | Muốn chi phí ổn định, ảnh gốc to cỡ nào cũng được |
+| `Bokin_Flux_Photoreal_Upscale_4x_TensorArt.json` | **đúng gấp 4** chiều rộng và chiều cao ảnh gốc | Ảnh gốc nhỏ (đến khoảng 1600px), muốn phóng 4x như nút 4x của Shakker |
+| `Bokin_Flux1_4K_Upscale_TensorArt.json` | khoảng **4K (8 MP)** | Workflow "4k-upscale" ban đầu với bộ **FLUX.1 dev** khớp nhau (flux1-dev-fp8, clip_l + t5xxl, ae) |
+| `Bokin_Flux2_Dev_4K_Upscale_TensorArt.json` | khoảng **4K (8 MP)** | Giống hệt workflow "4k-upscale" trên TensorArt, đổi đúng sang **FLUX.2 dev**. Xem [bản FLUX.2](#bản-flux2-giống-workflow-4k-upscale) |
+| `Bokin_Flux2_Klein_4K_Upscale_TensorArt.json` | khoảng **4K (8 MP)** | Như trên nhưng dùng **FLUX.2 klein 4B**, tốn ít credit nhất |
+| `Bokin_Flux_Scenery_4K_UHD_TensorArt.json` | **đúng 3840×2160** | Ảnh phong cảnh 16:9: làng quê, quán cà phê, hồ, đường, cây lá mùa thu. Xem [bản Scenery](#bản-scenery-4k-uhd-cho-ảnh-phong-cảnh-169) |
+
+Workflow **xoá vật thể** (tô lên vật, AI xoá và vẽ lại nền): xem [Xoá vật thể](#xoá-vật-thể-bản-thử).
+
+Khác với app Bokin, các workflow này chỉ dùng node TensorArt có sẵn: node chuẩn của ComfyUI, **Comfyui_TTP_Toolset** và (bản FLUX.2) **ComfyUI-Easy-Use**. Vì vậy chúng import được lên TensorArt.
+
+## Cách dùng trên TensorArt
+
+1. Mở trình tạo workflow của TensorArt, kéo thả một trong các file `.json` vào (hoặc dùng chức năng import).
+2. Nếu ô nào báo **không tìm thấy model**, bấm vào ô đó và chọn bản tương ứng trong danh sách của TensorArt:
+
+   | Ô | Chọn |
+   |---|---|
+   | Load Diffusion Model | **`flux1-dev.sft`** (mặc định), hoặc `flux1-dev-fp8.safetensors`. Muốn ảnh thật hơn nữa: `flux1-krea-dev.safetensors` và tăng **FluxGuidance lên 3.5** |
+   | Load CLIP (Dual) | `clip_l` + `t5xxl_fp8_e4m3fn`, type `flux` |
+   | Load VAE | `ae.safetensors` |
+   | Load Upscale Model | `4x_RealisticRescaler` (hoặc `4x_NMKD-Siax`, `4x-UltraSharp`) |
+
+   Lỗi `Invalid input value: field unet_name value must in: [...]` nghĩa là TensorArt không có file mang tên đó. Chọn một tên trong danh sách theo bảng trên. Các ô model khác cũng xử lý tương tự.
+
+   Bốn ô model phải cùng thuộc **FLUX.1**. Dùng FLUX.2 với `clip_l`/`t5xxl`/`ae` chính là lý do workflow "4k-upscale" cũ báo lỗi "Model/system issue".
+3. Chọn ảnh ở **Load Image**. Thêm một câu mô tả ảnh vào **đầu** prompt, ví dụ `portrait of an old fisherman, `. Có mô tả thì ảnh ra thật hơn rõ rệt.
+4. Bấm **Run**. Muốn dùng như một app thì đánh dấu TA Nodes cho Load Image, prompt, denoise và megapixels, rồi Publish.
+
+## Vì sao chọn các thiết lập này
+
+| Thiết lập | Giá trị | Lý do |
+|---|---|---|
+| Model vẽ lại | FLUX.1 dev | Model mở cho chi tiết ảnh chụp tốt nhất hiện nay |
+| FluxGuidance | **2.2** | Mức mặc định 3.5 hay làm da "nhựa", kiểu ảnh AI. Mức 2–2.5 cho kết cấu tự nhiên hơn |
+| Sampler / scheduler | euler / beta, 20 steps | Ổn định khi vẽ lại ảnh có sẵn (img2img) với Flux |
+| Denoise | **0.30** | Đủ để thêm lỗ chân lông, sợi tóc, vân vải mà vẫn giữ bố cục |
+| Model phóng to | 4x_RealisticRescaler | Được huấn luyện cho kết cấu ảnh thật, xử lý được ảnh nén JPEG |
+| Chia ô | 3×3, chồng mép 10%, trộn mép 128px | Mỗi ô khoảng 1 MP, đúng độ phân giải Flux làm tốt nhất, không lộ đường nối |
+| Vẽ lại từng ô một | RebatchLatents = 1 | Không dồn 9 ô vào GPU cùng lúc, tránh lỗi thiếu VRAM |
+| Chuẩn hoá ảnh gốc | ~1.5 MP | Chi phí và thời gian ổn định, ảnh rất lớn không làm nổ bộ nhớ |
+
+## Bản 4x: chọn số ô theo ảnh gốc
+
+Ở node `TTP_Tile_image_size`, đặt `width_factor` = chiều rộng ảnh gốc ÷ 256 và `height_factor` = chiều cao ÷ 256 (làm tròn). Như vậy mỗi ô khoảng 1 MP, đúng độ phân giải Flux làm tốt nhất.
+
+| Cạnh ảnh gốc | 512px | 768px | 1024px (mặc định) | 1280px | 1536px |
+|---|---|---|---|---|---|
+| factor | 2 | 3 | 4 | 5 | 6 |
+
+Ví dụ ảnh 1080×1350 thì đặt `width_factor` 4 và `height_factor` 5. Ảnh 1024px phóng 4x ra 4096px (16 MP), tốn khoảng gấp đôi bản 4K. Ảnh gốc trên khoảng 1600px nên dùng bản 4K.
+
+## Bản Scenery 4K UHD: cho ảnh phong cảnh 16:9
+
+Làm riêng cho ảnh làng quê, quán cà phê, hồ nước, đường và cây lá mùa thu, khổ 16:9 (1500×844, 2000×1125...). Khác bản 4K thường ở các điểm sau:
+
+| Thiết lập | Bản 4K thường | Bản Scenery | Lý do |
+|---|---|---|---|
+| Kích thước ra | ~8 MP, theo tỉ lệ ảnh gốc | **đúng 3840×2160** | Đúng chuẩn 4K UHD của YouTube và TV, không lệch vài pixel |
+| Chuẩn hoá ảnh gốc | về ~1.5 MP | bỏ | Ảnh 2000px không bị thu nhỏ trước khi phóng, giữ được nhiều chi tiết hơn |
+| Prompt | tả da, tóc, vải, film grain | tả lá cây, vỏ cây, mái ngói, ván gỗ, cửa sổ, gạch đá, mặt đường, mặt nước | Đúng các chất liệu có trong ảnh. Bỏ film grain vì ảnh gốc sạch, không có hạt |
+| Mô tả ảnh trong prompt | nên thêm | **không thêm** tên vật thể | Prompt áp cho cả 9 ô. Ghi "café" hay "train" có thể làm mọc vật thể lạ ở ô bầu trời hoặc ô lá cây |
+| FluxGuidance | 2.2 | **3.0** | Giữ vẻ sạch, rực của ảnh gốc. Mức 2.2 kéo về chất ảnh chụp, bớt bóng bẩy |
+| Model vẽ lại | flux1-dev.sft hoặc Krea | **flux1-dev.sft** | Krea thiên về màu ảnh chụp tự nhiên, dễ làm ảnh bớt rực so với phong cách gốc |
+
+Chi phí gần bằng bản 4K thường, vì 3840×2160 cũng khoảng 8 MP và cũng chia 9 ô.
+
+Lưu ý riêng cho thể loại này:
+
+- **Sửa chữ trước khi phóng to.** Biển hiệu và bảng phấn trong ảnh AI hay bị sai chữ, ví dụ "IKEF TONR GACU CAPE". Ở denoise 0.30, Flux không viết lại chữ mà chỉ làm chữ sai nét hơn, lên 4K càng dễ thấy. Hãy sửa chữ ngay lúc tạo ảnh, hoặc sửa bằng Photoshop/Canva rồi mới upscale.
+- **Ảnh không phải 16:9** sẽ bị cắt bớt ở giữa cho vừa 3840×2160. Ảnh dọc hoặc vuông thì dùng bản 4K thường.
+- **Mùa khác:** chỉ đổi chữ đầu prompt `autumn` thành `winter`, `spring` hoặc `summer`.
+- **Chốt thông số chuẩn cho công ty:** lấy 3 ảnh tiêu biểu, chạy 4 lần mỗi ảnh với FluxGuidance 2.5 / 3.0 và denoise 0.25 / 0.35. Chọn bộ đẹp nhất rồi lưu lại vào workflow. Giữ seed cố định (42) để các ảnh ra đồng đều.
+- **Giao cho nhân viên dùng:** khi Publish thành AI Tool, chỉ mở TA Node cho Load Image. Khoá các thông số còn lại để ảnh nào cũng ra cùng một chuẩn.
+- **8K (7680×4320):** đổi kích thước ở node "Ra đúng 3840x2160", rồi đặt `width_factor` và `height_factor` = 6. Tốn khoảng 4 lần.
+
+## Bản FLUX.2 (giống workflow 4k-upscale)
+
+Hai file `Bokin_Flux2_*` giữ nguyên từng node của workflow "4k-upscale" trên TensorArt: Image Scale Down To Size 1080, model 4x_RealisticRescaler, Scale Image to Total Pixels 8 MP, chia 3×3 ô với overlap 0.20, dpmpp_2m / sgm_uniform 10 bước, VAE Decode (Tiled), ghép ô với padding 256. Chỉ sửa những chỗ FLUX.2 bắt buộc phải khác:
+
+| Ô | Workflow cũ | Đúng cho FLUX.2 | Vì sao |
+|---|---|---|---|
+| Load Diffusion Model | `flux2_dev_fp8mixed`, weight_dtype `fp8_e4m3fn` | `flux2_dev_fp8mixed`, weight_dtype **`default`** | File đã là fp8 "mixed": một số lớp được giữ độ chính xác cao. Ép `fp8_e4m3fn` làm mất phần đó |
+| Text encoder | **Load CLIP (Dual)**: `clip_l` + `qwen2.5vl-7b`, type `flux` | **Load CLIP** (1 ô): `mistral_3_small_flux2_fp8`, type **`flux2`** | FLUX.2 dev đọc prompt bằng Mistral Small 3.1, không dùng clip_l, t5xxl hay Qwen2.5-VL |
+| VAE | `ae.safetensors` | **`flux2-vae.safetensors`** | `ae` là VAE của FLUX.1. FLUX.2 dùng VAE mới, lưu gấp đôi dữ liệu cho mỗi ô 16×16 pixel |
+| denoise | 0.25 | **0.12** | Xem giải thích bên dưới |
+| Kích thước ô | TTP_Tile_image_size 3×3, overlap 0.20 | bỏ TTP_Tile_image_size, đặt thẳng ô **1472×832** trong TTP_Image_Tile_Batch | Giữ mỗi ô chia hết cho 16 mà không làm méo tỉ lệ ảnh. Xem giải thích bên dưới |
+| Sửa màu | không có | thêm **Image Color Match** (Easy-Use, method `wavelet`) trước Save Image, lấy màu theo **ảnh gốc** | Giữ màu và độ sáng của ảnh gốc. Xem giải thích bên dưới |
+
+**Vì sao denoise phải hạ xuống 0.12.** FLUX.2 đặt lịch khử nhiễu lệch về phía nhiễu cao hơn FLUX.1 (shift 2.02 so với 1.15). Với sgm_uniform 10 bước:
+
+- FLUX.1 ở denoise 0.25 bắt đầu vẽ lại từ mức nhiễu **0.51**.
+- FLUX.2 cũng ở 0.25 bắt đầu từ **0.72**, tức vẽ lại mạnh hơn nhiều, dễ sinh chi tiết lạ.
+- FLUX.2 phải hạ xuống **0.12** mới về đúng mức 0.51.
+
+Mức nhiễu này được tính bằng chính mã ComfyUI. Chỉnh thêm: 0.10 giữ sát ảnh gốc, 0.15 thêm nhiều chi tiết.
+
+**Vì sao phải làm tròn ô về bội số của 16.** VAE của FLUX.2 xử lý ảnh theo khối 16 pixel (VAE của FLUX.1 là 8 pixel). TTP_Tile_image_size chỉ làm tròn kích thước ô về bội số của 8.
+
+- Với ảnh 16:9 ở 8 MP, mỗi ô rộng 1480 pixel. Con số này không chia hết cho 16.
+- VAE cắt mỗi ô còn 1472 pixel. TTP_Image_Assy vẫn ghép theo vị trí tính cho 1480, nên các ô lệch nhau vài pixel. Phần trộn mép 256 pixel chồng hai hình lệch lên nhau, tạo vệt mờ và bóng ma ở mọi đường nối. Ảnh ra cũng hụt bề ngang.
+- Bản đầu tiên của hai file FLUX.2 bị đúng lỗi này.
+- Bản hiện tại đặt thẳng kích thước ô **1472×832** (chia hết cho 16) trong TTP_Image_Tile_Batch. TTP_Image_Tile_Batch tự tính số ô và phần chồng mép, nên ảnh ở bất kỳ kích thước hay tỉ lệ nào cũng chia đúng.
+  - Ảnh 16:9 ở 8 MP (3862×2172) chia đúng 3×3 ô, mép chồng nhau 277 pixel theo chiều ngang và 162 pixel theo chiều dọc.
+  - Ảnh tỉ lệ khác vẫn chạy đúng, chỉ số ô thay đổi. Có điều, ở vài tỉ lệ phần chồng mép rất mỏng: 3:2 chỉ còn 65 pixel theo chiều dọc, 1:1 còn 48 pixel theo chiều ngang, 4:5 còn 30 pixel theo chiều dọc. Mép càng mỏng càng dễ lộ đường nối. Bản FLUX.2 được chỉnh cho ảnh 16:9. Ảnh tỉ lệ khác thì dùng bản FLUX.1, hoặc đổi kích thước ô cho hợp.
+- Scale Image to Total Pixels giữ `resolution_steps` = 1, nên ảnh ra **đúng tỉ lệ ảnh gốc**.
+- Có một bản sửa trung gian đặt `resolution_steps` = 44. Tham số này làm tròn chiều rộng và chiều cao riêng rẽ, khiến ảnh 16:9 bị kéo thành 3872×2156, lệch tỉ lệ khoảng 1%. Bản hiện tại đã bỏ cách này.
+
+**Vì sao thêm Image Color Match.** Klein là model nhỏ, chạy 4 bước. Khi vẽ lại từ mức nhiễu khoảng 50%, nó không giữ đúng tông màu gốc mà kéo về "gu" riêng, thường là tối hơn. Cả 9 ô do cùng một model vẽ nên toàn ảnh tối đi đều. Node `easy imageColorMatch` (method `wavelet`) xử lý việc này:
+
+- Lấy màu và độ sáng (các chi tiết lớn) từ **ảnh gốc** đưa vào (sau Image Scale Down To Size), không phải ảnh do model 4x phóng to. Model 4x cũng có thể làm đổi tông màu một chút, nên lấy màu thẳng từ ảnh gốc là chắc nhất.
+- Giữ chi tiết nhỏ mà model vừa vẽ thêm.
+
+Đây là cùng cách sửa màu app Bokin đang dùng. Thử trên ảnh 1500×844 của công ty, làm tối 15% và thêm chi tiết giả lập:
+
+| | Độ sáng trung bình | Chi tiết nhỏ |
+|---|---|---|
+| Ảnh gốc | 63.3 | 13.2 |
+| Ảnh vẽ lại bị tối | 56.2 | 22.2 |
+| Sau Image Color Match | 62.7 | 22.1 |
+
+Node này có cả ở bản dev. Muốn bỏ thì nối thẳng TTP_Image_Assy vào Save Image.
+
+Node chỉ chỉnh lại độ sáng ở các mảng lớn. Nếu klein làm tối các chi tiết nhỏ (khe lá, bóng gạch), phần đó được giữ lại như chi tiết mới, nên ảnh vẫn có thể trông hơi tối hơn. Khi đó hạ **denoise xuống 0.10** để klein vẽ lại nhẹ tay hơn.
+
+**Bản klein 4B** dùng cùng workflow, chỉ đổi:
+
+| Ô | Chọn |
+|---|---|
+| Load Diffusion Model | `flux-2-klein-4b-fp8` (không chọn bản có chữ `base`, vì bản base cần 20+ bước) |
+| Load CLIP | `qwen_3_4b`, type `flux2` |
+| Load VAE | `flux2-vae.safetensors` (dùng chung VAE với bản dev) |
+| Sampler / steps | `euler`, **4 bước**. Klein được chưng cất để chạy 4 bước. FluxGuidance không có tác dụng với klein |
+
+Muốn chất lượng ở giữa hai bản trên: chọn `flux-2-klein-9b-fp8` với text encoder `qwen_3_8b_fp8mixed`.
+
+**Credit.** Bảng dưới so sánh khối lượng tính toán của phần vẽ lại các ô, ước tính bằng số tham số của model × số token mỗi ô × số bước:
+
+| Cấu hình | So với bản FLUX.2 dev mặc định |
+|---|---|
+| FLUX.2 dev, 10 bước, overlap 0.20 (mặc định) | 100% |
+| FLUX.2 dev, 8 bước, overlap 0.10 | ~70% |
+| FLUX.1 dev, 10 bước (để so sánh) | ~40% |
+| FLUX.2 klein 9B, 4 bước | ~12% |
+| FLUX.2 klein 4B, 4 bước | ~5% |
+
+Bảng chưa tính phần cố định của mỗi lần chạy: tải model, phóng 4x, mã hoá và giải mã ảnh. Với klein, phần cố định chiếm tỉ lệ lớn, nên tổng credit thực tế giảm ít hơn con số trong bảng. Cách TensorArt quy đổi ra credit chưa được kiểm chứng. Hãy chạy mỗi bản một lần với cùng một ảnh rồi xem credit đã trừ.
+
+**Giấy phép.** FLUX.2 klein 4B dùng giấy phép Apache 2.0, được dùng thương mại. FLUX.2 dev và klein 9B dùng giấy phép FLUX Non-Commercial, cần kiểm tra trước khi dùng cho công việc của công ty.
+
+**Tên file trên TensorArt.** Tên model chính (`flux2_dev_fp8mixed`, `flux-2-klein-4b-fp8`, `flux-2-klein-9b-fp8`) lấy từ danh sách TensorArt. Tên text encoder và VAE lấy theo workflow mẫu của ComfyUI, nên có thể khác trên TensorArt. Nếu báo không tìm thấy, chọn file có chứa `mistral_3_small_flux2`, `qwen_3_4b` hoặc `flux2-vae`.
+
+## Chỉnh nhanh
+
+- **Mức sáng tạo** (`BasicScheduler → denoise`): 0.25 giữ sát ảnh gốc, 0.30 cân bằng, 0.35 thêm nhiều chi tiết nhưng dễ sinh chi tiết lạ.
+- **Kích thước ra** (`Scale to 4K → megapixels`): 8 ≈ 4K, 4 ≈ 2.7K, 16 ≈ 5.6K. Mức 16 tốn gấp đôi.
+- **Tiết kiệm credit:** giảm `steps` từ 20 xuống 12. Mặc định 20 steps nên tốn khoảng gấp đôi workflow cũ (10 steps).
+- **Ảnh chân dung cận mặt:** đặt `width_factor` và `height_factor` = 2 để ô to hơn, không cắt ngang khuôn mặt.
+- **Nếu TensorArt có LoRA realism cho FLUX.1:** chèn `LoraLoaderModelOnly` ngay sau Load Diffusion Model.
+
+## Xoá vật thể (bản thử)
+
+Thử trên TensorArt để chọn mô hình trước khi làm công cụ **Tô AI** trên Bokin App. Tô lên vật cần xoá, AI vẽ lại riêng vùng đó cho liền với nền. Ngoài vùng tô, từng điểm ảnh giữ y ảnh gốc, và ảnh ra đúng kích thước ảnh gốc.
+
+| File | Mô hình | Cách AI xoá |
+|---|---|---|
+| `Bokin_Xoa_Vat_The_Fill_OneReward_TensorArt.json` | **FLUX.1 Fill dev OneReward** | Mô hình chuyên tô vùng chọn, được huấn luyện thêm để xoá vật thể. Câu lệnh cố định `remove` |
+| `Bokin_Xoa_Vat_The_Qwen_Edit_2511_TensorArt.json` | **Qwen Image Edit 2511** | Vùng tô được tô đỏ rồi mới đưa cho Qwen, prompt bảo nó xoá vùng đỏ. AI không nhìn thấy vật thể nên không vẽ lại nó |
+
+### Cách thử
+
+1. Kéo thả file `.json` vào trình tạo workflow của TensorArt. Ô model nào báo không tìm thấy thì chọn theo bảng dưới.
+2. **Load Image**: chọn ảnh. Chuột phải vào ô > **Open in MaskEditor**, tô kín vật thể (cả bóng đổ của nó), tô rộng ra một chút, bấm **Save**.
+   Không có MaskEditor: trong Photoshop dùng **Eraser** xoá vật thể thành trong suốt, lưu **PNG** rồi chọn file đó. Vùng trong suốt chính là vùng tô.
+3. Bấm **Run**. Mỗi lần chạy ra một phương án khác (seed ngẫu nhiên), chạy 2–3 lần để chọn.
+4. Thử cùng ảnh, cùng vùng tô với cả hai file. So sánh: còn sót vật thể hay bóng không, có mọc vật lạ không, nền có liền không, tốn bao nhiêu credit.
+
+| Ô | Bản Fill OneReward | Bản Qwen Edit 2511 |
+|---|---|---|
+| Load Diffusion Model | `flux.1-fill-dev-OneReward-fp8.safetensors` | `qwen_image_edit_2511_fp8mixed.safetensors` |
+| Load CLIP | `clip_l` + `t5xxl_fp8_e4m3fn`, type `flux` | `qwen_2.5_vl_7b_fp8_scaled` (bản Qwen 2.5 VL 7B nào cũng được), type `qwen_image` |
+| Load VAE | `ae.safetensors` | `qwen_image_vae.safetensors` |
+| Load Upscale Model | `4x-UltraSharp.pth` | `4x-UltraSharp.pth` |
+
+### Thông số
+
+| Thiết lập | Bản Fill OneReward | Bản Qwen Edit 2511 | Lý do |
+|---|---|---|---|
+| Prompt | `remove`, negative `nsfw` | "Remove the red area…", negative trống | Fill: câu lệnh xoá cố định của nhóm tác giả OneReward. Qwen: xoá vùng đỏ, không thêm vật mới |
+| cfg / FluxGuidance | cfg **4**, FluxGuidance **1** | cfg **4** | Thông số của nhóm tác giả OneReward và của mẫu ComfyUI cho Qwen 2511 |
+| steps | 28 | 20 | Tác giả OneReward dùng 50, Qwen gốc 40. Mức thấp hơn đủ đẹp mà đỡ tốn credit |
+| Nới vùng tô (`GrowMask`) | 24 px | 24 px | Ăn hết viền mờ quanh vật thể. Còn sót viền thì tăng lên 40 |
+| Độ phân giải AI vẽ | 1 MP | 1 MP | Mức hai mô hình làm tốt nhất. Ảnh 4K có vùng xoá lớn: 1.5 MP cho chi tiết hơn, tốn thêm credit |
+| Dán lại ảnh gốc | phóng 4x-UltraSharp, thu về đúng kích thước gốc, mép mềm 12 px | như bên trái | Vùng vá nét như ảnh gốc, không lộ đường viền |
+
+- Muốn so với bản Fill gốc: chọn `flux1-fill-dev.safetensors`, đặt FluxGuidance **30** và cfg **1**. Bản gốc hay mọc vật thể mới vào chỗ vừa xoá, vì vậy mới có OneReward.
+- Bản thử cho AI xem cả ảnh (thu về 1 MP). Bản trên web sẽ chỉ cắt vùng quanh chỗ tô, nên với ảnh 4K chỗ vá sẽ nét hơn bản thử.
+- Ảnh không tô gì: ảnh ra giống ảnh gốc.
+
+## Đã kiểm tra
+
+- Mở trong ComfyUI v0.40.0 có cài Comfyui_TTP_Toolset: bản 4K có 25 node, bản 4x có 23 node, bản Scenery có 24 node. Không thiếu node nào, cả ba đều xuất ra prompt hợp lệ.
+- Chạy thử toàn bộ đường xử lý, thay model FLUX.1 bằng model SD1.5 trọng số ngẫu nhiên vì máy test không có FLUX.1:
+  - Bản 4K: chia 9 ô, ảnh ra đúng kích thước.
+  - Bản 4x: ảnh 256×256 cho ra đúng 1024×1024, 16 ô được vẽ lại lần lượt rồi ghép.
+  - Bản Scenery: ảnh phong cảnh 1500×844 của công ty cho ra đúng 3840×2160, 9 ô được vẽ lại lần lượt rồi ghép.
+- Bản FLUX.2: chạy phần chia ô, mã hoá, giải mã và ghép với một VAE đúng kiến trúc FLUX.2. VAE này dùng trọng số ngẫu nhiên, nhưng cắt ảnh theo khối 16 pixel giống bản thật.
+  - Bản cũ: ô 568 pixel bị cắt còn 560, ảnh ghép hụt 24 pixel.
+  - Bản hiện tại (ô cố định 1472×832), đúng 8 MP với ảnh 1920×1080: ô 1472×832 giữ nguyên trước và sau VAE, ảnh ra 3862×2172, đúng tỉ lệ 16:9 của ảnh gốc, không hụt pixel nào.
+  - Bản trung gian (`resolution_steps` 44): ô không bị cắt, nhưng ảnh ra 3872×2156, méo tỉ lệ khoảng 1%.
+- Bản Klein hiện tại (24 node, có Image Color Match): bài kiểm tra 8 MP ở trên chạy qua mọi node trừ bước phóng 4x và bước vẽ lại, gồm cả Image Color Match. Bản trước đó (25 node) chạy hết đường xử lý với model thay thế.
+- Bản FLUX.1 ban đầu: mở đủ 24 node, không thiếu node nào, chạy hết đường xử lý với model thay thế.
+- **Chưa** chạy trên TensorArt và chưa chạy với FLUX.1 thật. Tên file model trên TensorArt có thể khác, khi đó chọn lại theo bảng trên.
+- Hai bản xoá vật thể: mở trong ComfyUI v0.40.0, bản Fill 24 node, bản Qwen 29 node, không thiếu node nào. Chạy hết đường xử lý với model SD1.5 trọng số ngẫu nhiên thay cho FLUX/Qwen, ảnh 1920×1080, tô một hình tròn giữa ảnh và một ô sát mép dưới:
+  - Ảnh ra đúng 1920×1080.
+  - Mọi điểm ảnh cách vùng tô từ 40 px trở ra giữ y ảnh gốc, vùng tô được vẽ lại, cả ô sát mép ảnh.
+  - Bản Qwen: ảnh đưa cho Qwen có vùng tô (đã nới 24 px) tô đỏ đúng chỗ.

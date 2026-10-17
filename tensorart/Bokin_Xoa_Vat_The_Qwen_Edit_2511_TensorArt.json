@@ -1,0 +1,1581 @@
+{
+  "last_node_id": 29,
+  "last_link_id": 39,
+  "nodes": [
+    {
+      "id": 1,
+      "type": "LoadImage",
+      "pos": [
+        20,
+        90
+      ],
+      "size": [
+        440,
+        560
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            2,
+            29,
+            36
+          ],
+          "slot_index": 0
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": [
+            1
+          ],
+          "slot_index": 1
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage"
+      },
+      "title": "Ảnh + vùng tô (Load Image)",
+      "widgets_values": [
+        "example.png",
+        "image"
+      ]
+    },
+    {
+      "id": 2,
+      "type": "Note",
+      "pos": [
+        480,
+        90
+      ],
+      "size": [
+        480,
+        760
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "properties": {
+        "text": ""
+      },
+      "widgets_values": [
+        "BOKIN XOÁ VẬT THỂ - Qwen Image Edit 2511 (TensorArt, bản thử)\n\nCÁCH DÙNG\n1. Load Image: chọn ảnh.\n2. Tô lên vật cần xoá: chuột phải vào Load Image > Open in MaskEditor, tô kín vật thể (cả bóng đổ của nó), tô rộng ra một chút, bấm Save.\n   Không có MaskEditor: trong Photoshop dùng tẩy (Eraser) xoá vật thể thành trong suốt, lưu PNG rồi chọn file đó.\n3. Bấm Run. Chạy vài lần để có nhiều phương án (mỗi lần một seed khác).\n\nẢnh ra giữ nguyên kích thước ảnh gốc. Ngoài vùng tô, từng điểm ảnh giữ y ảnh gốc.\n\nAI không thấy vật thể: vùng tô được tô đỏ trước khi đưa cho Qwen, prompt bảo nó xoá vùng đỏ và vẽ nền cho liền. Vì vậy không cần gõ tên vật thể.\n\nMODEL (bấm vào ô để chọn nếu TensorArt báo không tìm thấy)\n- Load Diffusion Model: qwen_image_edit_2511_fp8mixed.safetensors (hoặc qwen_image_edit_2509_fp8_e4m3fn).\n- Load CLIP: qwen_2.5_vl_7b_fp8_scaled.safetensors (bản qwen 2.5 VL 7B nào cũng được), type qwen_image.\n- Load VAE: qwen_image_vae.safetensors.\n- 20 steps, cfg 4: thông số ComfyUI khuyên dùng cho 2511.\n- Giấy phép Apache 2.0, dùng thương mại được.\n\nCHỈNH NHANH\n- Nới vùng tô (GrowMask > expand): 24 px. Còn viền mờ của vật thể thì tăng lên 40.\n- Độ phân giải AI vẽ (megapixels): 1.0. Ảnh 4K, vùng xoá lớn: 1.5 cho chi tiết hơn (tốn thêm credit).\n- Bản thử này cho AI xem cả ảnh. Bản trên web sẽ chỉ cắt vùng quanh chỗ tô nên chi tiết sẽ nét hơn với ảnh 4K.\n- Muốn gợi ý thêm: thêm vào cuối prompt, vd. \"The area should become an empty road.\"\n"
+      ],
+      "color": "#432",
+      "bgcolor": "#653"
+    },
+    {
+      "id": 3,
+      "type": "GrowMask",
+      "pos": [
+        20,
+        690
+      ],
+      "size": [
+        440,
+        90
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "mask",
+          "type": "MASK",
+          "link": 1
+        }
+      ],
+      "outputs": [
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": [
+            5,
+            20,
+            33
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "GrowMask"
+      },
+      "title": "Nới vùng tô (px)",
+      "widgets_values": [
+        24,
+        true
+      ]
+    },
+    {
+      "id": 4,
+      "type": "ImageScaleToTotalPixels",
+      "pos": [
+        20,
+        830
+      ],
+      "size": [
+        440,
+        110
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 2
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            3,
+            17
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "ImageScaleToTotalPixels"
+      },
+      "title": "Độ phân giải AI vẽ (megapixels)",
+      "widgets_values": [
+        "lanczos",
+        1.0,
+        16
+      ]
+    },
+    {
+      "id": 5,
+      "type": "EmptyImage",
+      "pos": [
+        1040,
+        90
+      ],
+      "size": [
+        300,
+        130
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            4
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "EmptyImage"
+      },
+      "title": "Màu đỏ",
+      "widgets_values": [
+        64,
+        64,
+        1,
+        16711680
+      ]
+    },
+    {
+      "id": 6,
+      "type": "ImageCompositeMasked",
+      "pos": [
+        1040,
+        260
+      ],
+      "size": [
+        300,
+        140
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "destination",
+          "type": "IMAGE",
+          "link": 3
+        },
+        {
+          "name": "source",
+          "type": "IMAGE",
+          "link": 4
+        },
+        {
+          "name": "mask",
+          "type": "MASK",
+          "link": 5
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            8,
+            11
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "ImageCompositeMasked"
+      },
+      "title": "Tô đỏ vùng cần xoá",
+      "widgets_values": [
+        0,
+        0,
+        true
+      ]
+    },
+    {
+      "id": 7,
+      "type": "UNETLoader",
+      "pos": [
+        1380,
+        90
+      ],
+      "size": [
+        420,
+        90
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            14
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "UNETLoader"
+      },
+      "widgets_values": [
+        "qwen_image_edit_2511_fp8mixed.safetensors",
+        "default"
+      ]
+    },
+    {
+      "id": 8,
+      "type": "CLIPLoader",
+      "pos": [
+        1380,
+        220
+      ],
+      "size": [
+        420,
+        110
+      ],
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "CLIP",
+          "type": "CLIP",
+          "links": [
+            6,
+            9
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CLIPLoader"
+      },
+      "widgets_values": [
+        "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+        "qwen_image",
+        "default"
+      ]
+    },
+    {
+      "id": 9,
+      "type": "VAELoader",
+      "pos": [
+        1380,
+        370
+      ],
+      "size": [
+        420,
+        60
+      ],
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "VAE",
+          "type": "VAE",
+          "links": [
+            7,
+            10,
+            18,
+            26
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "VAELoader"
+      },
+      "widgets_values": [
+        "qwen_image_vae.safetensors"
+      ]
+    },
+    {
+      "id": 10,
+      "type": "TextEncodeQwenImageEditPlus",
+      "pos": [
+        1040,
+        470
+      ],
+      "size": [
+        420,
+        200
+      ],
+      "flags": {},
+      "order": 9,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "clip",
+          "type": "CLIP",
+          "link": 6
+        },
+        {
+          "name": "vae",
+          "type": "VAE",
+          "link": 7
+        },
+        {
+          "name": "image1",
+          "type": "IMAGE",
+          "link": 8
+        },
+        {
+          "name": "image2",
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "image3",
+          "type": "IMAGE",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "CONDITIONING",
+          "type": "CONDITIONING",
+          "links": [
+            12
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "TextEncodeQwenImageEditPlus"
+      },
+      "title": "Prompt (Qwen Edit)",
+      "widgets_values": [
+        "Remove the red area completely and fill it in so that it blends seamlessly with the surrounding scene. Continue the background naturally, matching the lighting, shadows, colors, perspective and textures of the rest of the photo. Do not add any new object, person, animal, text or sign."
+      ]
+    },
+    {
+      "id": 11,
+      "type": "TextEncodeQwenImageEditPlus",
+      "pos": [
+        1040,
+        710
+      ],
+      "size": [
+        420,
+        160
+      ],
+      "flags": {},
+      "order": 10,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "clip",
+          "type": "CLIP",
+          "link": 9
+        },
+        {
+          "name": "vae",
+          "type": "VAE",
+          "link": 10
+        },
+        {
+          "name": "image1",
+          "type": "IMAGE",
+          "link": 11
+        },
+        {
+          "name": "image2",
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "image3",
+          "type": "IMAGE",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "CONDITIONING",
+          "type": "CONDITIONING",
+          "links": [
+            13
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "TextEncodeQwenImageEditPlus"
+      },
+      "title": "Negative (trống)",
+      "widgets_values": [
+        ""
+      ]
+    },
+    {
+      "id": 12,
+      "type": "FluxKontextMultiReferenceLatentMethod",
+      "pos": [
+        1500,
+        470
+      ],
+      "size": [
+        300,
+        60
+      ],
+      "flags": {},
+      "order": 11,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "conditioning",
+          "type": "CONDITIONING",
+          "link": 12
+        }
+      ],
+      "outputs": [
+        {
+          "name": "CONDITIONING",
+          "type": "CONDITIONING",
+          "links": [
+            22
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "FluxKontextMultiReferenceLatentMethod"
+      },
+      "widgets_values": [
+        "index_timestep_zero"
+      ]
+    },
+    {
+      "id": 13,
+      "type": "FluxKontextMultiReferenceLatentMethod",
+      "pos": [
+        1500,
+        710
+      ],
+      "size": [
+        300,
+        60
+      ],
+      "flags": {},
+      "order": 12,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "conditioning",
+          "type": "CONDITIONING",
+          "link": 13
+        }
+      ],
+      "outputs": [
+        {
+          "name": "CONDITIONING",
+          "type": "CONDITIONING",
+          "links": [
+            23
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "FluxKontextMultiReferenceLatentMethod"
+      },
+      "widgets_values": [
+        "index_timestep_zero"
+      ]
+    },
+    {
+      "id": 14,
+      "type": "ModelSamplingAuraFlow",
+      "pos": [
+        1840,
+        470
+      ],
+      "size": [
+        300,
+        60
+      ],
+      "flags": {},
+      "order": 13,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": 14
+        }
+      ],
+      "outputs": [
+        {
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            15
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "ModelSamplingAuraFlow"
+      },
+      "widgets_values": [
+        3.1
+      ]
+    },
+    {
+      "id": 15,
+      "type": "CFGNorm",
+      "pos": [
+        1840,
+        570
+      ],
+      "size": [
+        300,
+        80
+      ],
+      "flags": {},
+      "order": 14,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": 15
+        }
+      ],
+      "outputs": [
+        {
+          "name": "patched_model",
+          "type": "MODEL",
+          "links": [
+            16
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CFGNorm"
+      },
+      "widgets_values": [
+        1.0,
+        false
+      ]
+    },
+    {
+      "id": 16,
+      "type": "DifferentialDiffusion",
+      "pos": [
+        1840,
+        690
+      ],
+      "size": [
+        300,
+        60
+      ],
+      "flags": {},
+      "order": 15,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": 16
+        }
+      ],
+      "outputs": [
+        {
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            21
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "DifferentialDiffusion"
+      },
+      "widgets_values": [
+        1.0
+      ]
+    },
+    {
+      "id": 17,
+      "type": "VAEEncode",
+      "pos": [
+        1500,
+        830
+      ],
+      "size": [
+        220,
+        50
+      ],
+      "flags": {},
+      "order": 16,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "pixels",
+          "type": "IMAGE",
+          "link": 17
+        },
+        {
+          "name": "vae",
+          "type": "VAE",
+          "link": 18
+        }
+      ],
+      "outputs": [
+        {
+          "name": "LATENT",
+          "type": "LATENT",
+          "links": [
+            19
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "VAEEncode"
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 18,
+      "type": "SetLatentNoiseMask",
+      "pos": [
+        1500,
+        930
+      ],
+      "size": [
+        260,
+        50
+      ],
+      "flags": {},
+      "order": 17,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "samples",
+          "type": "LATENT",
+          "link": 19
+        },
+        {
+          "name": "mask",
+          "type": "MASK",
+          "link": 20
+        }
+      ],
+      "outputs": [
+        {
+          "name": "LATENT",
+          "type": "LATENT",
+          "links": [
+            24
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "SetLatentNoiseMask"
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 19,
+      "type": "KSampler",
+      "pos": [
+        2160,
+        90
+      ],
+      "size": [
+        280,
+        270
+      ],
+      "flags": {},
+      "order": 18,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": 21
+        },
+        {
+          "name": "positive",
+          "type": "CONDITIONING",
+          "link": 22
+        },
+        {
+          "name": "negative",
+          "type": "CONDITIONING",
+          "link": 23
+        },
+        {
+          "name": "latent_image",
+          "type": "LATENT",
+          "link": 24
+        }
+      ],
+      "outputs": [
+        {
+          "name": "LATENT",
+          "type": "LATENT",
+          "links": [
+            25
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "KSampler"
+      },
+      "widgets_values": [
+        42,
+        "randomize",
+        20,
+        4.0,
+        "euler",
+        "simple",
+        1.0
+      ]
+    },
+    {
+      "id": 20,
+      "type": "VAEDecode",
+      "pos": [
+        2160,
+        410
+      ],
+      "size": [
+        220,
+        50
+      ],
+      "flags": {},
+      "order": 19,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "samples",
+          "type": "LATENT",
+          "link": 25
+        },
+        {
+          "name": "vae",
+          "type": "VAE",
+          "link": 26
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            28
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "VAEDecode"
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 21,
+      "type": "UpscaleModelLoader",
+      "pos": [
+        2520,
+        90
+      ],
+      "size": [
+        380,
+        60
+      ],
+      "flags": {},
+      "order": 20,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "UPSCALE_MODEL",
+          "type": "UPSCALE_MODEL",
+          "links": [
+            27
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "UpscaleModelLoader"
+      },
+      "widgets_values": [
+        "4x-UltraSharp.pth"
+      ]
+    },
+    {
+      "id": 22,
+      "type": "ImageUpscaleWithModel",
+      "pos": [
+        2520,
+        190
+      ],
+      "size": [
+        380,
+        50
+      ],
+      "flags": {},
+      "order": 21,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "upscale_model",
+          "type": "UPSCALE_MODEL",
+          "link": 27
+        },
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 28
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            30
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "ImageUpscaleWithModel"
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 23,
+      "type": "easy imageSize",
+      "pos": [
+        2520,
+        280
+      ],
+      "size": [
+        380,
+        80
+      ],
+      "flags": {},
+      "order": 22,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 29
+        }
+      ],
+      "outputs": [
+        {
+          "name": "width_int",
+          "type": "INT",
+          "links": [
+            31
+          ],
+          "slot_index": 0
+        },
+        {
+          "name": "height_int",
+          "type": "INT",
+          "links": [
+            32
+          ],
+          "slot_index": 1
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "easy imageSize"
+      },
+      "title": "Kích thước ảnh gốc",
+      "widgets_values": []
+    },
+    {
+      "id": 24,
+      "type": "ImageScale",
+      "pos": [
+        2520,
+        400
+      ],
+      "size": [
+        380,
+        150
+      ],
+      "flags": {},
+      "order": 23,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 30
+        },
+        {
+          "name": "width",
+          "type": "INT",
+          "widget": {
+            "name": "width"
+          },
+          "link": 31
+        },
+        {
+          "name": "height",
+          "type": "INT",
+          "widget": {
+            "name": "height"
+          },
+          "link": 32
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            37
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "ImageScale"
+      },
+      "title": "Về đúng kích thước ảnh gốc",
+      "widgets_values": [
+        "lanczos",
+        512,
+        512,
+        "disabled"
+      ]
+    },
+    {
+      "id": 25,
+      "type": "MaskToImage",
+      "pos": [
+        2940,
+        90
+      ],
+      "size": [
+        340,
+        50
+      ],
+      "flags": {},
+      "order": 24,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "mask",
+          "type": "MASK",
+          "link": 33
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            34
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "MaskToImage"
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 26,
+      "type": "ImageBlur",
+      "pos": [
+        2940,
+        180
+      ],
+      "size": [
+        340,
+        90
+      ],
+      "flags": {},
+      "order": 25,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 34
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            35
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "ImageBlur"
+      },
+      "title": "Làm mềm mép vùng tô",
+      "widgets_values": [
+        12,
+        6.0
+      ]
+    },
+    {
+      "id": 27,
+      "type": "ImageToMask",
+      "pos": [
+        2940,
+        310
+      ],
+      "size": [
+        340,
+        60
+      ],
+      "flags": {},
+      "order": 26,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 35
+        }
+      ],
+      "outputs": [
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": [
+            38
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "ImageToMask"
+      },
+      "widgets_values": [
+        "red"
+      ]
+    },
+    {
+      "id": 28,
+      "type": "ImageCompositeMasked",
+      "pos": [
+        2940,
+        410
+      ],
+      "size": [
+        340,
+        140
+      ],
+      "flags": {},
+      "order": 27,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "destination",
+          "type": "IMAGE",
+          "link": 36
+        },
+        {
+          "name": "source",
+          "type": "IMAGE",
+          "link": 37
+        },
+        {
+          "name": "mask",
+          "type": "MASK",
+          "link": 38
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            39
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "ImageCompositeMasked"
+      },
+      "title": "Dán vùng đã xoá vào ảnh gốc",
+      "widgets_values": [
+        0,
+        0,
+        false
+      ]
+    },
+    {
+      "id": 29,
+      "type": "SaveImage",
+      "pos": [
+        2520,
+        610
+      ],
+      "size": [
+        760,
+        460
+      ],
+      "flags": {},
+      "order": 28,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 39
+        }
+      ],
+      "outputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "links": [],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "SaveImage"
+      },
+      "widgets_values": [
+        "Bokin/xoa_vat_the_qwen"
+      ]
+    }
+  ],
+  "links": [
+    [
+      1,
+      1,
+      1,
+      3,
+      0,
+      "MASK"
+    ],
+    [
+      2,
+      1,
+      0,
+      4,
+      0,
+      "IMAGE"
+    ],
+    [
+      3,
+      4,
+      0,
+      6,
+      0,
+      "IMAGE"
+    ],
+    [
+      4,
+      5,
+      0,
+      6,
+      1,
+      "IMAGE"
+    ],
+    [
+      5,
+      3,
+      0,
+      6,
+      2,
+      "MASK"
+    ],
+    [
+      6,
+      8,
+      0,
+      10,
+      0,
+      "CLIP"
+    ],
+    [
+      7,
+      9,
+      0,
+      10,
+      1,
+      "VAE"
+    ],
+    [
+      8,
+      6,
+      0,
+      10,
+      2,
+      "IMAGE"
+    ],
+    [
+      9,
+      8,
+      0,
+      11,
+      0,
+      "CLIP"
+    ],
+    [
+      10,
+      9,
+      0,
+      11,
+      1,
+      "VAE"
+    ],
+    [
+      11,
+      6,
+      0,
+      11,
+      2,
+      "IMAGE"
+    ],
+    [
+      12,
+      10,
+      0,
+      12,
+      0,
+      "CONDITIONING"
+    ],
+    [
+      13,
+      11,
+      0,
+      13,
+      0,
+      "CONDITIONING"
+    ],
+    [
+      14,
+      7,
+      0,
+      14,
+      0,
+      "MODEL"
+    ],
+    [
+      15,
+      14,
+      0,
+      15,
+      0,
+      "MODEL"
+    ],
+    [
+      16,
+      15,
+      0,
+      16,
+      0,
+      "MODEL"
+    ],
+    [
+      17,
+      4,
+      0,
+      17,
+      0,
+      "IMAGE"
+    ],
+    [
+      18,
+      9,
+      0,
+      17,
+      1,
+      "VAE"
+    ],
+    [
+      19,
+      17,
+      0,
+      18,
+      0,
+      "LATENT"
+    ],
+    [
+      20,
+      3,
+      0,
+      18,
+      1,
+      "MASK"
+    ],
+    [
+      21,
+      16,
+      0,
+      19,
+      0,
+      "MODEL"
+    ],
+    [
+      22,
+      12,
+      0,
+      19,
+      1,
+      "CONDITIONING"
+    ],
+    [
+      23,
+      13,
+      0,
+      19,
+      2,
+      "CONDITIONING"
+    ],
+    [
+      24,
+      18,
+      0,
+      19,
+      3,
+      "LATENT"
+    ],
+    [
+      25,
+      19,
+      0,
+      20,
+      0,
+      "LATENT"
+    ],
+    [
+      26,
+      9,
+      0,
+      20,
+      1,
+      "VAE"
+    ],
+    [
+      27,
+      21,
+      0,
+      22,
+      0,
+      "UPSCALE_MODEL"
+    ],
+    [
+      28,
+      20,
+      0,
+      22,
+      1,
+      "IMAGE"
+    ],
+    [
+      29,
+      1,
+      0,
+      23,
+      0,
+      "IMAGE"
+    ],
+    [
+      30,
+      22,
+      0,
+      24,
+      0,
+      "IMAGE"
+    ],
+    [
+      31,
+      23,
+      0,
+      24,
+      1,
+      "INT"
+    ],
+    [
+      32,
+      23,
+      1,
+      24,
+      2,
+      "INT"
+    ],
+    [
+      33,
+      3,
+      0,
+      25,
+      0,
+      "MASK"
+    ],
+    [
+      34,
+      25,
+      0,
+      26,
+      0,
+      "IMAGE"
+    ],
+    [
+      35,
+      26,
+      0,
+      27,
+      0,
+      "IMAGE"
+    ],
+    [
+      36,
+      1,
+      0,
+      28,
+      0,
+      "IMAGE"
+    ],
+    [
+      37,
+      24,
+      0,
+      28,
+      1,
+      "IMAGE"
+    ],
+    [
+      38,
+      27,
+      0,
+      28,
+      2,
+      "MASK"
+    ],
+    [
+      39,
+      28,
+      0,
+      29,
+      0,
+      "IMAGE"
+    ]
+  ],
+  "groups": [
+    {
+      "title": "1. Ảnh và vùng cần xoá",
+      "bounding": [
+        0,
+        0,
+        980,
+        1110
+      ],
+      "color": "#3f789e",
+      "font_size": 24,
+      "flags": {}
+    },
+    {
+      "title": "2. AI vẽ lại vùng tô",
+      "bounding": [
+        1020,
+        0,
+        1440,
+        1110
+      ],
+      "color": "#8a5a2b",
+      "font_size": 24,
+      "flags": {}
+    },
+    {
+      "title": "3. Dán lại vào ảnh gốc",
+      "bounding": [
+        2500,
+        0,
+        820,
+        1110
+      ],
+      "color": "#3f8e5a",
+      "font_size": 24,
+      "flags": {}
+    }
+  ],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 0.55,
+      "offset": [
+        60,
+        120
+      ]
+    }
+  },
+  "version": 0.4
+}

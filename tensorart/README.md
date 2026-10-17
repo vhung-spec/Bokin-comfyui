@@ -11,6 +11,8 @@ Các workflow phóng to ảnh rồi vẽ lại chi tiết bằng Flux:
 | `Bokin_Flux2_Klein_4K_Upscale_TensorArt.json` | khoảng **4K (8 MP)** | Như trên nhưng dùng **FLUX.2 klein 4B**, tốn ít credit nhất |
 | `Bokin_Flux_Scenery_4K_UHD_TensorArt.json` | **đúng 3840×2160** | Ảnh phong cảnh 16:9: làng quê, quán cà phê, hồ, đường, cây lá mùa thu. Xem [bản Scenery](#bản-scenery-4k-uhd-cho-ảnh-phong-cảnh-169) |
 
+Workflow **xoá vật thể** (tô lên vật, AI xoá và vẽ lại nền): xem [Xoá vật thể](#xoá-vật-thể-bản-thử).
+
 Khác với app Bokin, các workflow này chỉ dùng node TensorArt có sẵn: node chuẩn của ComfyUI, **Comfyui_TTP_Toolset** và (bản FLUX.2) **ComfyUI-Easy-Use**. Vì vậy chúng import được lên TensorArt.
 
 ## Cách dùng trên TensorArt
@@ -162,6 +164,45 @@ Bảng chưa tính phần cố định của mỗi lần chạy: tải model, ph
 - **Ảnh chân dung cận mặt:** đặt `width_factor` và `height_factor` = 2 để ô to hơn, không cắt ngang khuôn mặt.
 - **Nếu TensorArt có LoRA realism cho FLUX.1:** chèn `LoraLoaderModelOnly` ngay sau Load Diffusion Model.
 
+## Xoá vật thể (bản thử)
+
+Thử trên TensorArt để chọn mô hình trước khi làm công cụ **Tô AI** trên Bokin App. Tô lên vật cần xoá, AI vẽ lại riêng vùng đó cho liền với nền. Ngoài vùng tô, từng điểm ảnh giữ y ảnh gốc, và ảnh ra đúng kích thước ảnh gốc.
+
+| File | Mô hình | Cách AI xoá |
+|---|---|---|
+| `Bokin_Xoa_Vat_The_Fill_OneReward_TensorArt.json` | **FLUX.1 Fill dev OneReward** | Mô hình chuyên tô vùng chọn, được huấn luyện thêm để xoá vật thể. Câu lệnh cố định `remove` |
+| `Bokin_Xoa_Vat_The_Qwen_Edit_2511_TensorArt.json` | **Qwen Image Edit 2511** | Vùng tô được tô đỏ rồi mới đưa cho Qwen, prompt bảo nó xoá vùng đỏ. AI không nhìn thấy vật thể nên không vẽ lại nó |
+
+### Cách thử
+
+1. Kéo thả file `.json` vào trình tạo workflow của TensorArt. Ô model nào báo không tìm thấy thì chọn theo bảng dưới.
+2. **Load Image**: chọn ảnh. Chuột phải vào ô > **Open in MaskEditor**, tô kín vật thể (cả bóng đổ của nó), tô rộng ra một chút, bấm **Save**.
+   Không có MaskEditor: trong Photoshop dùng **Eraser** xoá vật thể thành trong suốt, lưu **PNG** rồi chọn file đó. Vùng trong suốt chính là vùng tô.
+3. Bấm **Run**. Mỗi lần chạy ra một phương án khác (seed ngẫu nhiên), chạy 2–3 lần để chọn.
+4. Thử cùng ảnh, cùng vùng tô với cả hai file. So sánh: còn sót vật thể hay bóng không, có mọc vật lạ không, nền có liền không, tốn bao nhiêu credit.
+
+| Ô | Bản Fill OneReward | Bản Qwen Edit 2511 |
+|---|---|---|
+| Load Diffusion Model | `flux.1-fill-dev-OneReward-fp8.safetensors` | `qwen_image_edit_2511_fp8mixed.safetensors` |
+| Load CLIP | `clip_l` + `t5xxl_fp8_e4m3fn`, type `flux` | `qwen_2.5_vl_7b_fp8_scaled` (bản Qwen 2.5 VL 7B nào cũng được), type `qwen_image` |
+| Load VAE | `ae.safetensors` | `qwen_image_vae.safetensors` |
+| Load Upscale Model | `4x-UltraSharp.pth` | `4x-UltraSharp.pth` |
+
+### Thông số
+
+| Thiết lập | Bản Fill OneReward | Bản Qwen Edit 2511 | Lý do |
+|---|---|---|---|
+| Prompt | `remove`, negative `nsfw` | "Remove the red area…", negative trống | Fill: câu lệnh xoá cố định của nhóm tác giả OneReward. Qwen: xoá vùng đỏ, không thêm vật mới |
+| cfg / FluxGuidance | cfg **4**, FluxGuidance **1** | cfg **4** | Thông số của nhóm tác giả OneReward và của mẫu ComfyUI cho Qwen 2511 |
+| steps | 28 | 20 | Tác giả OneReward dùng 50, Qwen gốc 40. Mức thấp hơn đủ đẹp mà đỡ tốn credit |
+| Nới vùng tô (`GrowMask`) | 24 px | 24 px | Ăn hết viền mờ quanh vật thể. Còn sót viền thì tăng lên 40 |
+| Độ phân giải AI vẽ | 1 MP | 1 MP | Mức hai mô hình làm tốt nhất. Ảnh 4K có vùng xoá lớn: 1.5 MP cho chi tiết hơn, tốn thêm credit |
+| Dán lại ảnh gốc | phóng 4x-UltraSharp, thu về đúng kích thước gốc, mép mềm 12 px | như bên trái | Vùng vá nét như ảnh gốc, không lộ đường viền |
+
+- Muốn so với bản Fill gốc: chọn `flux1-fill-dev.safetensors`, đặt FluxGuidance **30** và cfg **1**. Bản gốc hay mọc vật thể mới vào chỗ vừa xoá, vì vậy mới có OneReward.
+- Bản thử cho AI xem cả ảnh (thu về 1 MP). Bản trên web sẽ chỉ cắt vùng quanh chỗ tô, nên với ảnh 4K chỗ vá sẽ nét hơn bản thử.
+- Ảnh không tô gì: ảnh ra giống ảnh gốc.
+
 ## Đã kiểm tra
 
 - Mở trong ComfyUI v0.40.0 có cài Comfyui_TTP_Toolset: bản 4K có 25 node, bản 4x có 23 node, bản Scenery có 24 node. Không thiếu node nào, cả ba đều xuất ra prompt hợp lệ.
@@ -176,3 +217,7 @@ Bảng chưa tính phần cố định của mỗi lần chạy: tải model, ph
 - Bản Klein hiện tại (24 node, có Image Color Match): bài kiểm tra 8 MP ở trên chạy qua mọi node trừ bước phóng 4x và bước vẽ lại, gồm cả Image Color Match. Bản trước đó (25 node) chạy hết đường xử lý với model thay thế.
 - Bản FLUX.1 ban đầu: mở đủ 24 node, không thiếu node nào, chạy hết đường xử lý với model thay thế.
 - **Chưa** chạy trên TensorArt và chưa chạy với FLUX.1 thật. Tên file model trên TensorArt có thể khác, khi đó chọn lại theo bảng trên.
+- Hai bản xoá vật thể: mở trong ComfyUI v0.40.0, bản Fill 24 node, bản Qwen 29 node, không thiếu node nào. Chạy hết đường xử lý với model SD1.5 trọng số ngẫu nhiên thay cho FLUX/Qwen, ảnh 1920×1080, tô một hình tròn giữa ảnh và một ô sát mép dưới:
+  - Ảnh ra đúng 1920×1080.
+  - Mọi điểm ảnh cách vùng tô từ 40 px trở ra giữ y ảnh gốc, vùng tô được vẽ lại, cả ô sát mép ảnh.
+  - Bản Qwen: ảnh đưa cho Qwen có vùng tô (đã nới 24 px) tô đỏ đúng chỗ.
